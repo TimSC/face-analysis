@@ -30,13 +30,14 @@ class ShapeModel:
 	def NormaliseFace(self, im, pos, targetImageSize):
 		if self.tess is None: self.CalcTesselation()
 		pos = np.array(pos)
+		iml = im.load()
 	
 		#Find affine mapping from mean shape to input positions
 		triAffines = []
 		for tri in self.tess.vertices:
 			meanVertPos = np.hstack((self.tess.points[tri], np.ones((3,1))))
 			inputVertPos = np.hstack((pos[tri,:], np.ones((3,1))))
-			affine = np.dot(inputVertPos, np.linalg.inv(meanVertPos))
+			affine = np.dot(inputVertPos, np.linalg.inv(meanVertPos)) 
 			triAffines.append(affine)
 
 		#Determine which tesselation triangle contains each pixel in the shape norm image
@@ -49,6 +50,7 @@ class ShapeModel:
 		
 		#Synthesis shape norm image		
 		synth = Image.new("RGB",targetImageSize)
+		synthl = synth.load()
 		for i in range(targetImageSize[0]):
 			for j in range(targetImageSize[1]):
 				normSpaceCoord = (float(i)/im.size[0],float(j)/im.size[1])
@@ -59,10 +61,13 @@ class ShapeModel:
 				#Calculate position in the input image
 				homogCoord = (normSpaceCoord[0], normSpaceCoord[1], 1.)
 				inImgCoord = np.dot(affine, homogCoord)
-				#print tri, normSpaceCoord, 
+				#print i, j
+				#print homogCoord
+				#print self.tess.points[self.tess.vertices[tri]]
+				print inImgCoord
 				try:
-					synth[i,j] = im[inImgCoord[0],inImgCoord[1]]
-				except AttributeError:
+					synthl[i,j] = iml[int(round(inImgCoord[0])),int(round(inImgCoord[1]))]
+				except IndexError:
 					pass
 
 		synth.show()
