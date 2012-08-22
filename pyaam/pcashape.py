@@ -3,6 +3,19 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.spatial as spatial
 from PIL import Image
+import math
+
+def GetBilinearPixel(im, imload, pos):
+	modX, modY = map(math.modf, pos)
+	bl = np.array(imload[modX[1], modY[1]])
+	br = np.array(imload[modX[1]+1, modY[1]])
+	tl = np.array(imload[modX[1], modY[1]+1])
+	tr = np.array(imload[modX[1]+1, modY[1]+1])
+	
+	b = modX[0] * br + (1. - modX[0]) * bl
+	t = modX[0] * tr + (1. - modX[0]) * tl
+
+	return modY[0] * t + (1. - modY[0]) * b
 
 class ShapeModel:
 	def __init__(self, meanShape, eigenShapes, variances):
@@ -70,7 +83,11 @@ class ShapeModel:
 				inImgCoord = np.dot(affine, homogCoord)
 
 				try:
-					synthl[i,j] = iml[int(round(inImgCoord[0])),int(round(inImgCoord[1]))]
+					#Nearest neighbour
+					#synthl[i,j] = iml[int(round(inImgCoord[0])),int(round(inImgCoord[1]))]
+
+					#Bilinear sampling
+					synthl[i,j] = tuple(map(int,np.round(GetBilinearPixel(im, iml, inImgCoord[0:2]))))
 				except IndexError:
 					pass
 

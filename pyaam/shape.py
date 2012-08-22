@@ -64,8 +64,8 @@ if __name__ == "__main__":
 
 	shapeModel.CalcTesselation()
 
-	im = Image.open("/home/tim/Desktop/facedb/tim/cropped/1.jpg")
-	shapeModel.NormaliseFace(im, posdata[1],(200,200))
+	im = Image.open("/home/tim/Desktop/facedb/tim/cropped/99.jpg")
+	shapeModel.NormaliseFace(im, posdata[98],(400,400))
 
 	#plt.plot(a[:,0],-a[:,1])
 	#plt.plot(b[:,0],-b[:,1])
