@@ -1,6 +1,7 @@
 import readposdata, procrustes, pcashape
 import numpy as np
 import matplotlib.pyplot as plt
+from PIL import Image
 
 def RescaleXYZeroToOne(posdataArr):
 	#This operates in place on the array
@@ -62,6 +63,9 @@ if __name__ == "__main__":
 	c = shapeModel.GenShape(.1)
 
 	shapeModel.CalcTesselation()
+
+	im = Image.open("/home/tim/Desktop/facedb/tim/cropped/1.jpg")
+	shapeModel.NormaliseFace(im, posdata[1],(200,200))
 
 	#plt.plot(a[:,0],-a[:,1])
 	#plt.plot(b[:,0],-b[:,1])
