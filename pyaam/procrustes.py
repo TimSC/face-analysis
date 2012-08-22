@@ -20,10 +20,8 @@ def EvalRms(angIn, frameScaled, targetZeroCent):
 		out.append(((p1rx-p2[0])**2.+(p1ry-p2[1])**2.)**0.5) #Calculate distance
 	return out
 
-def CalcProcrustesOnFrame(posdata, targetShape):
+def CalcProcrustesOnFrame(frameArr, targetArr):
 	#Perform Procrustes analysis
-	targetArr = FrameToArray(targetShape)
-	frameArr = FrameToArray(posdata)
 
 	#Calc centeroids
 	targetCent = targetArr.mean(axis=0)
@@ -63,8 +61,8 @@ def CalcProcrustesOnFrame(posdata, targetShape):
 	return frameFinal
 
 def CalcProcrustes(posdata, targetShape):
-	out = {}
-	for frameNum in posdata:
-		out[frameNum] = CalcProcrustesOnFrame(posdata[frameNum], targetShape)
+	out = np.empty(posdata.shape)
+	for rowNum in range(posdata.shape[0]):
+		out[rowNum,:,:] = CalcProcrustesOnFrame(posdata[rowNum,:], targetShape)
 	return out
 

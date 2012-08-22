@@ -2,27 +2,26 @@ import readposdata, procrustes, pcashape
 import numpy as np
 import matplotlib.pyplot as plt
 
-def GetNormalisedScaleShape(posdata):
-	#Makes points range from zero to one in both x and y, for a range of frames
-	out = {}
+def RescaleXYZeroToOne(posdataArr):
+	#This operates in place on the array
 
-	for frameNum in posdata:
-		framePos = posdata[frameNum]
-		frameX = np.array([pos[0] for pos in framePos])
-		frameY = np.array([pos[1] for pos in framePos])
+	for rowNum in range(posdataArr.shape[0]):
+		#Determine range
+		xmin = posdataArr[rowNum,:,0].min()
+		xmax = posdataArr[rowNum,:,0].max()
+		ymin = posdataArr[rowNum,:,1].min()
+		ymax = posdataArr[rowNum,:,1].max()
+		xrang = xmax - xmin		
+		yrang = ymax - ymin	
 
-		xmin, xmax = frameX.min(), frameX.max()
-		ymin, ymax = frameY.min(), frameY.max()
-		xrang = xmax - xmin
-		yrang = ymax - ymin
 		#Prevent divide by zero
 		if xrang == 0.: xrang = 1.
 		if yrang == 0.: yrang = 1.
-		
-		normX = (frameX - xmin) / xrang
-		normY = (frameY - ymin) / yrang
-		out[frameNum] = (zip(normX, normY))
-	return out
+
+		#Rescale row
+		posdataArr[rowNum,:,0] = (posdataArr[rowNum,:,0] - xmin) / xrang
+		posdataArr[rowNum,:,1] = (posdataArr[rowNum,:,1] - ymin) / yrang
+
 
 if __name__ == "__main__":
 	posdata = readposdata.ReadPosData(open("/home/tim/Desktop/facedb/tim/marks.dat"))
@@ -32,18 +31,24 @@ if __name__ == "__main__":
 		 51, 50, 49, 48, 47, 46, 45]
 
 	posdata2 = readposdata.ReadPosDataMirror(open("/home/tim/Desktop/facedb/tim/marks.dat"), idReflection)
-
-
 	posdata.update(posdata2)
 
-	#First calculate a reference shape to be used as the basis of procrustes analysis
+	#Convert to 3D matrix, first axis are frames, second axis selects the point, third axis is X or Y selector
+	numPoints = len(posdata[posdata.keys()[0]])
+	posdataArr = np.empty((len(posdata), numPoints, 2))
+	for countFrame, frameNum in enumerate(posdata):
+		for ptNum, pt in enumerate(posdata[frameNum]):
+			posdataArr[countFrame, ptNum, 0] = pt[0]
+			posdataArr[countFrame, ptNum, 1] = pt[1]
+
+	#First calculate a reference shape to be used as the basis of rescaling data to 0->1 range
 	#I don't think this approach is particularly satisfactory but it should work
 	#for simple cases
-	normScaleShape = GetNormalisedScaleShape(posdata)
-	meanScaleShape = pcashape.CalcMeanShape(normScaleShape)
+	RescaleXYZeroToOne(posdataArr)
+	meanScaleShape = posdataArr.mean(axis=0)
 
 	#Transform frames by procrustes analysis
-	frameProc = procrustes.CalcProcrustes(posdata, meanScaleShape)
+	frameProc = procrustes.CalcProcrustes(posdataArr, meanScaleShape)
 	
 	#for frameNum in frameProc:
 	#	framePos = frameProc[frameNum]
@@ -56,16 +61,18 @@ if __name__ == "__main__":
 	b = shapeModel.GenShape(0.)
 	c = shapeModel.GenShape(.1)
 
-	plt.plot(a[::2],-a[1::2])
-	plt.plot(b[::2],-b[1::2])
-	plt.plot(c[::2],-c[1::2])
+	shapeModel.CalcTesselation()
+
+	#plt.plot(a[:,0],-a[:,1])
+	#plt.plot(b[:,0],-b[:,1])
+	#plt.plot(c[:,0],-c[:,1])
 	
 	
 	#plt.plot([p[0] for p in meanProcShape], [p[1] for p in meanProcShape],'.')
 
 	#print meanScaleShape
 	#plt.plot([p[0] for p in normScaleShape[0]], [p[1] for p in normScaleShape[0]])
-	plt.show()
+	#plt.show()
 
 	
 
