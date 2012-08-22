@@ -34,26 +34,33 @@ class ShapeModel:
 	
 		#Find affine mapping from mean shape to input positions
 		triAffines = []
-		for tri in self.tess.vertices:
-			meanVertPos = np.hstack((self.tess.points[tri], np.ones((3,1))))
-			inputVertPos = np.hstack((pos[tri,:], np.ones((3,1))))
+		for i, tri in enumerate(self.tess.vertices):
+			meanVertPos = np.hstack((self.tess.points[tri], np.ones((3,1)))).transpose()
+			inputVertPos = np.hstack((pos[tri,:], np.ones((3,1)))).transpose()
 			affine = np.dot(inputVertPos, np.linalg.inv(meanVertPos)) 
+			#print i, meanVertPos, np.dot(affine, meanVertPos)#, affine
 			triAffines.append(affine)
 
 		#Determine which tesselation triangle contains each pixel in the shape norm image
 		inTriangle = np.ones((targetImageSize), dtype=np.int)
 		for i in range(targetImageSize[0]):
 			for j in range(targetImageSize[1]):
-				normSpaceCoord = (float(i)/im.size[0],float(j)/im.size[1])
+				normSpaceCoord = (float(i)/targetImageSize[0],float(j)/targetImageSize[1])
 				simp = self.tess.find_simplex([normSpaceCoord])
 				inTriangle[i,j] = simp
 		
+		#Visualise tess mesh
+		#for tri in self.tess.vertices:
+		#	pos = self.tess.points[tri]
+		#	plt.plot(pos[:,0], pos[:,1])
+		#plt.show()
+
 		#Synthesis shape norm image		
 		synth = Image.new("RGB",targetImageSize)
 		synthl = synth.load()
 		for i in range(targetImageSize[0]):
 			for j in range(targetImageSize[1]):
-				normSpaceCoord = (float(i)/im.size[0],float(j)/im.size[1])
+				normSpaceCoord = (float(i)/synth.size[0],float(j)/synth.size[1])
 				tri = inTriangle[i,j]
 				if tri == -1: continue
 				affine = triAffines[tri]
@@ -61,10 +68,7 @@ class ShapeModel:
 				#Calculate position in the input image
 				homogCoord = (normSpaceCoord[0], normSpaceCoord[1], 1.)
 				inImgCoord = np.dot(affine, homogCoord)
-				#print i, j
-				#print homogCoord
-				#print self.tess.points[self.tess.vertices[tri]]
-				print inImgCoord
+
 				try:
 					synthl[i,j] = iml[int(round(inImgCoord[0])),int(round(inImgCoord[1]))]
 				except IndexError:
