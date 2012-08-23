@@ -1,6 +1,13 @@
 import numpy as np
 from PIL import Image
 
+def LimitPixelIntensity(app):
+	#Limit pixel intensity to range of 0 to 255
+	negativePix = np.where(app < 0.)
+	app[negativePix] = 0 #Sets negative pixels to zero
+	saturatedPix = np.where(app > 255.)
+	app[saturatedPix] = 255 #Sets negative pixels to zero
+
 class AppearanceModel:
 	def __init__(self, meanAppearance, eigenFaces, variances, imgShape):
 		self.meanAppearance = meanAppearance
@@ -32,11 +39,7 @@ class AppearanceModel:
 		print self.eigenFaces.dtype
 		app = app + (self.eigenFaces[0,:] * eigenValues[0])
 		
-		#Limit pixel intensity to range of 0 to 255
-		negativePix = np.where(app < 0.)
-		app[negativePix] = 0 #Sets negative pixels to zero
-		saturatedPix = np.where(app > 255.)
-		app[saturatedPix] = 255 #Sets negative pixels to zero
+		LimitPixelIntensity(app)
 
 		#Format data into an image
 		outIm = np.array(app, dtype=np.uint8).reshape(self.imgShape)

@@ -1,6 +1,7 @@
 from PIL import Image
 import numpy as np
 import os, pcaappearance, pickle
+import matplotlib.pyplot as plt
 
 if __name__ == "__main__":
 	path = "shapefree"
@@ -24,6 +25,10 @@ if __name__ == "__main__":
 	appModel = pcaappearance.CalcApperanceModel(imageData, pix.shape)
 	
 	pickle.dump(appModel, open("appmodel.dat","wb"), protocol =  pickle.HIGHEST_PROTOCOL)
+
+	#print appModel.variances
+	#plt.plot(appModel.variances)
+	#plt.show()
 
 	#for i in range(10):
 	#	im = appModel.GetEigenface(i)
