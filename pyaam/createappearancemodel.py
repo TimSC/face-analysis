@@ -25,13 +25,9 @@ if __name__ == "__main__":
 	
 	pickle.dump(appModel, open("appmodel.dat","wb"), protocol =  pickle.HIGHEST_PROTOCOL)
 
-	#avImg = np.array(imageData.mean(axis=0), dtype=np.uint8).reshape(pix.shape)
-	#out = Image.fromarray(avImg)
-	#out.show()
-
-	for i in range(10):
-		im = appModel.GetEigenface(i)
-		im.save("eigenface"+str(i)+".png")
+	#for i in range(10):
+	#	im = appModel.GetEigenface(i)
+	#	im.save("eigenface"+str(i)+".png")
 	
-	appModel.GetAverageFace().save("averageface.png")
+	#appModel.GetAverageFace().save("averageface.png")
 
