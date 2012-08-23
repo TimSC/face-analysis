@@ -37,27 +37,27 @@ class ShapeModel:
 		return final
 
 	def CalcTesselation(self):
-		self.tess = spatial.Delaunay(self.meanShape)
-		self.vertices = self.tess.vertices
-		#print len(self.tess.points)
-		#print len(self.tess.vertices)
+		tess = spatial.Delaunay(self.meanShape)
+		self.vertices = tess.vertices
+		#print len(tess.points)
+		#print len(tess.vertices)
 
 		#Determine which tesselation triangle contains each pixel in the shape norm image
 		self.inTriangle = np.ones(self.sizeImage, dtype=np.int) * -1
 		for i in range(self.sizeImage[0]):
 			for j in range(self.sizeImage[1]):
 				normSpaceCoord = (float(i)/self.sizeImage[0],float(j)/self.sizeImage[1])
-				simp = self.tess.find_simplex([normSpaceCoord])
+				simp = tess.find_simplex([normSpaceCoord])
 				self.inTriangle[i,j] = simp
 		
 		#Visualise tess mesh
-		#for tri in self.tess.vertices:
-		#	pos = self.tess.points[tri]
+		#for tri in tess.vertices:
+		#	pos = tess.points[tri]
 		#	plt.plot(pos[:,0], pos[:,1])
 		#plt.show()
 
 	def NormaliseFace(self, im, pos):
-		if self.tess is None or self.inTriangle is None: self.CalcTesselation()
+		if self.inTriangle is None: self.CalcTesselation()
 		pos = np.array(pos)
 		iml = im.load()
 	

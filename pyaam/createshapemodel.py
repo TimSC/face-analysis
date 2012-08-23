@@ -1,4 +1,4 @@
-import readposdata, procrustes, pcashape
+import readposdata, procrustes, pcashape, pickle
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
@@ -58,14 +58,16 @@ if __name__ == "__main__":
 
 	#Perform PCA on shape
 	shapeModel = pcashape.CalcShapeModel(frameProc)
-	a = shapeModel.GenShape(-0.1)
-	b = shapeModel.GenShape(0.)
-	c = shapeModel.GenShape(.1)
+	#a = shapeModel.GenShape(-0.1)
+	#b = shapeModel.GenShape(0.)
+	#c = shapeModel.GenShape(.1)
 
 	shapeModel.CalcTesselation()
 
-	im = Image.open("/home/tim/dev/facedb/tim/cropped/100.jpg")
-	shapeModel.NormaliseFace(im, posdata[99])
+	pickle.dump(shapeModel, open("shapemodel.dat","wb"), protocol =  pickle.HIGHEST_PROTOCOL)
+
+	#im = Image.open("/home/tim/dev/facedb/tim/cropped/100.jpg")
+	#shapeModel.NormaliseFace(im, posdata[99])
 
 	#plt.plot(a[:,0],-a[:,1])
 	#plt.plot(b[:,0],-b[:,1])
