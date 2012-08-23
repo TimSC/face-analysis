@@ -36,8 +36,11 @@ class AppearanceModel:
 	def GenerateFace(self, eigenValues):
 		#Construct face from average and Eigenfaces
 		app = self.meanAppearance
-		print self.eigenFaces.dtype
-		app = app + (self.eigenFaces[0,:] * eigenValues[0])
+		#print self.eigenFaces.dtype
+		#for row, val in enumerate(eigenValues):
+		#	app = app + (self.eigenFaces[0,row] * val)
+		for row, val in enumerate(eigenValues):
+			app = app + (self.eigenFaces[row,:] * val)
 		
 		LimitPixelIntensity(app)
 
