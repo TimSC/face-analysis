@@ -22,7 +22,8 @@ class ShapeModel:
 		self.meanShape = meanShape
 		self.eigenShapes = eigenShapes
 		self.variances = variances
-		self.tess = None
+		self.tess, self.inTriangle, self.vertices = None, None, None
+		self.sizeImage = (400, 400)
 
 	def GenShape(self, shapeParam):
 		numPoints = self.meanShape.shape[0]
@@ -37,30 +38,17 @@ class ShapeModel:
 
 	def CalcTesselation(self):
 		self.tess = spatial.Delaunay(self.meanShape)
+		self.vertices = self.tess.vertices
 		#print len(self.tess.points)
 		#print len(self.tess.vertices)
 
-	def NormaliseFace(self, im, pos, targetImageSize):
-		if self.tess is None: self.CalcTesselation()
-		pos = np.array(pos)
-		iml = im.load()
-	
-		#Find affine mapping from mean shape to input positions
-		triAffines = []
-		for i, tri in enumerate(self.tess.vertices):
-			meanVertPos = np.hstack((self.tess.points[tri], np.ones((3,1)))).transpose()
-			inputVertPos = np.hstack((pos[tri,:], np.ones((3,1)))).transpose()
-			affine = np.dot(inputVertPos, np.linalg.inv(meanVertPos)) 
-			#print i, meanVertPos, np.dot(affine, meanVertPos)#, affine
-			triAffines.append(affine)
-
 		#Determine which tesselation triangle contains each pixel in the shape norm image
-		inTriangle = np.ones((targetImageSize), dtype=np.int)
-		for i in range(targetImageSize[0]):
-			for j in range(targetImageSize[1]):
-				normSpaceCoord = (float(i)/targetImageSize[0],float(j)/targetImageSize[1])
+		self.inTriangle = np.ones(self.sizeImage, dtype=np.int) * -1
+		for i in range(self.sizeImage[0]):
+			for j in range(self.sizeImage[1]):
+				normSpaceCoord = (float(i)/self.sizeImage[0],float(j)/self.sizeImage[1])
 				simp = self.tess.find_simplex([normSpaceCoord])
-				inTriangle[i,j] = simp
+				self.inTriangle[i,j] = simp
 		
 		#Visualise tess mesh
 		#for tri in self.tess.vertices:
@@ -68,13 +56,27 @@ class ShapeModel:
 		#	plt.plot(pos[:,0], pos[:,1])
 		#plt.show()
 
+	def NormaliseFace(self, im, pos):
+		if self.tess is None or self.inTriangle is None: self.CalcTesselation()
+		pos = np.array(pos)
+		iml = im.load()
+	
+		#Find affine mapping from mean shape to input positions
+		triAffines = []
+		for i, tri in enumerate(self.vertices):
+			meanVertPos = np.hstack((self.meanShape[tri], np.ones((3,1)))).transpose()
+			inputVertPos = np.hstack((pos[tri,:], np.ones((3,1)))).transpose()
+			affine = np.dot(inputVertPos, np.linalg.inv(meanVertPos)) 
+			#print i, meanVertPos, np.dot(affine, meanVertPos)#, affine
+			triAffines.append(affine)
+
 		#Synthesis shape norm image		
-		synth = Image.new("RGB",targetImageSize)
+		synth = Image.new("RGB",self.sizeImage)
 		synthl = synth.load()
-		for i in range(targetImageSize[0]):
-			for j in range(targetImageSize[1]):
+		for i in range(synth.size[0]):
+			for j in range(synth.size[1]):
 				normSpaceCoord = (float(i)/synth.size[0],float(j)/synth.size[1])
-				tri = inTriangle[i,j]
+				tri = self.inTriangle[i,j]
 				if tri == -1: continue
 				affine = triAffines[tri]
 				

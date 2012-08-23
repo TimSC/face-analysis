@@ -25,13 +25,13 @@ def RescaleXYZeroToOne(posdataArr):
 
 
 if __name__ == "__main__":
-	posdata = readposdata.ReadPosData(open("/home/tim/Desktop/facedb/tim/marks.dat"))
+	posdata = readposdata.ReadPosData(open("/home/tim/dev/facedb/tim/marks.dat"))
 	idReflection = [9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 22, 21, 20, 19, 18, 25, 24,\
 		 23, 14, 13, 12, 11, 10, 17, 16, 15, 36, 35, 34, 33, 32, 31, 30, 29,\
 		 28, 27, 26, 41, 40, 39, 38, 37, 44, 43, 42, 57, 56, 55, 54, 53, 52,\
 		 51, 50, 49, 48, 47, 46, 45]
 
-	posdata2 = readposdata.ReadPosDataMirror(open("/home/tim/Desktop/facedb/tim/marks.dat"), idReflection)
+	posdata2 = readposdata.ReadPosDataMirror(open("/home/tim/dev/facedb/tim/marks.dat"), idReflection)
 	posdata.update(posdata2)
 
 	#Convert to 3D matrix, first axis are frames, second axis selects the point, third axis is X or Y selector
@@ -64,8 +64,8 @@ if __name__ == "__main__":
 
 	shapeModel.CalcTesselation()
 
-	im = Image.open("/home/tim/Desktop/facedb/tim/cropped/99.jpg")
-	shapeModel.NormaliseFace(im, posdata[98],(400,400))
+	im = Image.open("/home/tim/dev/facedb/tim/cropped/100.jpg")
+	shapeModel.NormaliseFace(im, posdata[99])
 
 	#plt.plot(a[:,0],-a[:,1])
 	#plt.plot(b[:,0],-b[:,1])
