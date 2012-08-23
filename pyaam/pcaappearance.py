@@ -51,9 +51,13 @@ class AppearanceModel:
 
 def CalcApperanceModel(imageData, imgShape):
 	
+	print imageData.min(), imageData.max()
+
 	#Zero centre the pixel data
 	meanAppearance = imageData.mean(axis=0)
 	imageDataCent = imageData - meanAppearance
+
+	print imageDataCent.min(), imageDataCent.max()
 
 	#Use M. Turk and A. Pentland trick (A^T T) from Eigenfaces (1991)
 	#print imageDataCent.shape
@@ -67,5 +71,23 @@ def CalcApperanceModel(imageData, imgShape):
 	#Construct eigenvectors
 	eigenFaces = np.dot(v, imageDataCent)
 
-	return AppearanceModel(meanAppearance, eigenFaces, s, imgShape)
+	#Normalise eigenvector lengths to one
+	rowMags = np.power(np.power(eigenFaces,2.).sum(axis=1), 0.5)
+	eigenFacesNorm = (eigenFaces.transpose() / rowMags).transpose()
+
+	print eigenFacesNorm.shape
+	print eigenFacesNorm[0,:].max(), eigenFacesNorm[0,:].min()
+
+	#Project appearance features into PCA space
+	print imageDataCent.shape
+	appPcaSpace = np.dot(eigenFacesNorm, imageDataCent.transpose())
+
+	print appPcaSpace[0,:].max(), appPcaSpace[0,:].min()
+
+	#Calculate variance of variation mode
+	variance = appPcaSpace.var(axis=1)
+	print variance.shape
+	print variance
+
+	return AppearanceModel(meanAppearance, eigenFaces, variance, imgShape)
 
