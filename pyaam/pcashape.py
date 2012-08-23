@@ -22,7 +22,7 @@ class ShapeModel:
 		self.meanShape = meanShape
 		self.eigenShapes = eigenShapes
 		self.variances = variances
-		self.tess, self.inTriangle, self.vertices = None, None, None
+		self.inTriangle, self.vertices = None, None
 		self.sizeImage = (400, 400)
 
 	def GenShape(self, shapeParam):
@@ -93,14 +93,15 @@ class ShapeModel:
 				except IndexError:
 					pass
 
-		synth.show()
+		#synth.show()
 
-		#verts = self.tess.vertices[simp]
+		#verts = tess.vertices[simp]
 		#print verts
 		#for v in verts:
-		#	print self.tess.points[v]
+		#	print tess.points[v]
 
 		#print self.meanShape
+		return synth
 
 def CalcShapeModel(shapeArr):
 
