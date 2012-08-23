@@ -56,6 +56,11 @@ class ShapeModel:
 		#	plt.plot(pos[:,0], pos[:,1])
 		#plt.show()
 
+	def GetNormFaceFromEigVec(self, im, vec):
+		shape = self.GenShape(vec[3:])
+		scaledShape = (2. * shape - 1.) * vec[2] + (vec[0], vec[1])
+		return self.NormaliseFace(im, scaledShape)
+
 	def NormaliseFace(self, im, pos):
 		if self.inTriangle is None: self.CalcTesselation()
 		pos = np.array(pos)

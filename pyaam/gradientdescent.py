@@ -14,11 +14,12 @@ def DifferenceIm(im1, im2):
 	outIm = np.array(diff, dtype=np.uint8)
 	return Image.fromarray(outIm)	
 
-def Eval(eigVec, targetImg, appearanceModel, scale):
-	print eigVec * scale
-	im1 = appearanceModel.GenerateFace(eigVec * scale)
+def Eval(eigVec, targetImg, appearanceModel):
+	print eigVec
+	im1 = appearanceModel.GenerateFace(eigVec[4:])
+	im2 = shapeModel.GetNormFaceFromEigVec(test, eigVec[0:4])
 	arr1 = np.asarray(im1)
-	arr2 = np.asarray(targetImg)
+	arr2 = np.asarray(im2)
 	diff = arr1 - arr2
 	print np.power(diff,1.).sum()
 	#print np.abs(diff)
@@ -27,20 +28,25 @@ def Eval(eigVec, targetImg, appearanceModel, scale):
 if __name__ == "__main__":
 	shapeModel = pickle.load(open("shapemodel.dat","rb"))
 	appearanceModel = pickle.load(open("appmodel.dat","rb"))
-	test = Image.open("shapefree/99.png")
+	#test = Image.open("shapefree/99.png")
+	test = Image.open("/home/tim/dev/facedb/tim/cropped/100.jpg")
+
+	
+	#im.show()
+	#exit(0)
 
 	#im = appearanceModel.GenerateFace([0.])
 	#im.show()
 	#DifferenceIm(im, test).show()
+	initial = np.zeros((20,))
+	initial[0] = 550.
+	initial[1] = 570.
+	initial[2] = 300.
 
-	result = opt.fmin_powell(Eval, np.zeros((20,)), args = (test, appearanceModel, 1.))
+	result = opt.fmin_powell(Eval, initial, args = (test, appearanceModel))
 
 	print result
-	#print "Final", result[1] * 1.
-
-	#print result.tolist()
-
-	print "Cost", Eval(result, test, appearanceModel, 1.).sum()
+	print "Cost", Eval(result, test, appearanceModel).sum()
 
 	#print "x", result.tolist()
 	time.sleep(1.)
@@ -50,3 +56,4 @@ if __name__ == "__main__":
 
 	diffIm = DifferenceIm(im, test)
 	diffIm.show()
+
