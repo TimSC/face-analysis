@@ -5,8 +5,6 @@ import numpy as np
 
 if __name__ == "__main__":
 
-
-
 	shapeModel = pickle.load(open("shapemodel.dat","rb"))
 	appModel = pickle.load(open("appmodel.dat","rb"))
 
@@ -23,5 +21,8 @@ if __name__ == "__main__":
 	combModel = pcacombined.CreateCombinedModel(shapeModel,\
 		appModel, shapePcaSpace, appPcaShape)
 
-	im = combModel.GenerateFace(np.random.rand((10)) * 4. - 2.)
-	im.show()
+	#im = combModel.GenerateFace(np.random.rand((10)) * 4. - 2.)
+	#im.show()
+
+	pickle.dump(combModel, open("combinedmodel.dat","wb"), protocol =  pickle.HIGHEST_PROTOCOL)
+
