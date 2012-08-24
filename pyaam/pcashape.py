@@ -114,6 +114,53 @@ class ShapeModel:
 		#print self.meanShape
 		return synth
 
+	def CopyShapeFreeFaceToImg(self, targetIm, faceIm, shape):
+
+		pos = np.array(shape)
+		targetIml = targetIm.load()
+		faceIml = faceIm.load()
+		shape = np.array(shape)
+
+		#Split input shape into mesh
+		tess = spatial.Delaunay(shape)
+
+		#Find affine mapping from input positions to mean shape
+		triAffines = []
+		for i, tri in enumerate(tess.vertices):
+			meanVertPos = np.hstack((self.meanShape[tri], np.ones((3,1)))).transpose()
+			shapeVertPos = np.hstack((pos[tri,:], np.ones((3,1)))).transpose()
+			affine = np.dot(meanVertPos, np.linalg.inv(shapeVertPos)) 
+			triAffines.append(affine)
+
+		#Calculate ROI in target image
+		xmin, xmax = shape[:,0].min(), shape[:,0].max()
+		ymin, ymax = shape[:,1].min(), shape[:,1].max()
+
+		#Calculate pixel colours
+		for i in range(int(xmin), int(xmax+1)):
+			for j in range(int(ymin), int(ymax+1)):
+				#normSpaceCoordX = (i - xmin) / (xmax - xmin)
+				#normSpaceCoordY = (j - ymin) / (ymax - ymin)
+
+				#Determine which tesselation triangle contains each pixel in the shape norm image
+				simp = tess.find_simplex([i, j])
+				affine = triAffines[simp]
+
+				#Calculate position in the input image
+				homogCoord = (i, j, 1.)
+				normImgCoord = np.dot(affine, homogCoord)
+
+				#Scale normalised coordinate by image size
+				shapeFreeImgCoord = ((normImgCoord[0]+0.5)*faceIm.size[0], (normImgCoord[1]+0.5)*faceIm.size[1])
+
+				#print i, j, simp, shapeFreeImgCoord
+
+				try:
+					targetIml[i,j] = tuple(map(int,np.round(GetBilinearPixel(faceIm, faceIml, shapeFreeImgCoord))))
+				except IndexError:
+					pass
+
+
 def CalcShapeModel(shapeArr):
 
 	#Prepare for PCA by subtracting the mean shape

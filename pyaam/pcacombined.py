@@ -1,6 +1,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+from PIL import Image
 
 class CombinedModel:
 	def __init__(self, shapeModel, appModel, eigenVec, variances, numShapeComp, numAppComp, shapeScaleFactor):
@@ -23,14 +24,25 @@ class CombinedModel:
 		shapeValues = result[:self.numShapeComp] / self.shapeScaleFactor
 		appValues = result[self.numShapeComp:]
 
-		img = self.appModel.GenerateFace(appValues, stdDevScaled = False)
+		shapeFreeImg = self.appModel.GenerateFace(appValues, stdDevScaled = False)
 		#img = self.appModel.GetAverageFace()
 
 		shape = self.shapeModel.GenShape(shapeValues, stdDevScaled = False)
-		plt.plot([pt[0] for pt in shape],[-pt[1] for pt in shape])
-		plt.show()
+		#plt.plot([pt[0] for pt in shape],[-pt[1] for pt in shape])
+		#plt.show()
 
-		return img
+		targetIm = Image.new("RGB", shapeFreeImg.size)
+
+		#Scale coordinates to keep the output image the same as the shape free image
+		print shape
+		scaleShapeToImg = []
+		for pt in shape:
+			scaleShapeToImg.append(((pt[0]+0.5) * shapeFreeImg.size[0], (pt[1]+0.5) * shapeFreeImg.size[1]))
+
+		#Transform the shape free image and paste into the target image
+		self.shapeModel.CopyShapeFreeFaceToImg(targetIm, shapeFreeImg, scaleShapeToImg)
+
+		return targetIm
 
 def CreateCombinedModel(shapeModel, appModel, shapePcaSpace, appPcaShape):
 
