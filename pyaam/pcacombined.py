@@ -22,8 +22,8 @@ class CombinedModel:
 		shapeValues = result[:self.numShapeComp] / self.shapeScaleFactor
 		appValues = result[self.numShapeComp:]
 
-		#img = self.appModel.GenerateFace(appValues)
-		img = self.appModel.GetAverageFace()
+		img = self.appModel.GenerateFace(appValues, stdDevScaled = 0)
+		#img = self.appModel.GetAverageFace()
 		return img
 
 def CreateCombinedModel(shapeModel, appModel, shapePcaSpace, appPcaShape):

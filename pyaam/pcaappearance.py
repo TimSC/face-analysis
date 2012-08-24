@@ -33,11 +33,12 @@ class AppearanceModel:
 		out = Image.fromarray(outIm)
 		return out
 
-	def GenerateFace(self, eigenValues):
+	def GenerateFace(self, eigenValues, stdDevScaled = True):
 		#Construct face from average and Eigenfaces
 		app = self.meanAppearance
 		for row, val in enumerate(eigenValues):
-			stdDevScaling = (self.variances[row] ** 0.5)
+			if stdDevScaled: stdDevScaling = (self.variances[row] ** 0.5)
+			else: stdDevScaling = 1.
 			app = app + (self.eigenFaces[row,:] * stdDevScaling * val)
 		
 		LimitPixelIntensity(app)

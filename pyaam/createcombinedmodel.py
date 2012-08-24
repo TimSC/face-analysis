@@ -19,6 +19,6 @@ if __name__ == "__main__":
 	combModel = pcacombined.CreateCombinedModel(shapeModel,\
 		appModel, shapePcaSpace, appPcaShape)
 
-	im = combModel.GenerateFace([0.1])
+	im = combModel.GenerateFace([1.0, 5.0])
 	im.show()
 	
