@@ -65,7 +65,7 @@ def CalcApperanceModel(imageData, imgShape):
 
 	#Perform PCA on A^T T matrix
 	u, s, v = np.linalg.svd(covm)
-	#print s.shape
+	#print s
 	#print v.shape
 
 	#Construct eigenvectors
@@ -75,48 +75,12 @@ def CalcApperanceModel(imageData, imgShape):
 	rowMags = np.power(np.power(eigenFaces,2.).sum(axis=1), 0.5)
 	eigenFacesNorm = (eigenFaces.transpose() / rowMags).transpose()
 
-	print eigenFacesNorm.shape
-	print imageDataCent.shape
-	print eigenFacesNorm[:,:].max(), eigenFacesNorm[:,:].min()
-	print imageDataCent.max(), imageDataCent.min()
-
 	#Project appearance features into PCA space
-	print imageDataCent.shape
 	appPcaSpace = np.dot(eigenFacesNorm, imageDataCent.transpose())
-
-	print "v1",appPcaSpace[0,:50]
-	print "v2",appPcaSpace[0,:50].var()
-	print appPcaSpace.max(), appPcaSpace.min()
-
-	print "x", np.dot(eigenFacesNorm[0,:], imageDataCent[0,:].transpose())
 
 	#Calculate variance of variation mode
 	variance = appPcaSpace.var(axis=1)
-	print variance.shape
-	print variance[:10]	
-	print "z",eigenFacesNorm[0,:].min(),eigenFacesNorm[0,:].max()
-
-	var1 = meanAppearance + ((variance[0]**0.5) * eigenFacesNorm[0,:])
-	print var1.max(), var1.min()
-	#Format data into an image
-	outIm = np.array(var1, dtype=np.uint8).reshape(imgShape)
-	out = Image.fromarray(outIm)
-	out.show()
-
-	var1 = meanAppearance + (-(variance[0]**0.5) * eigenFacesNorm[0,:])
-	print var1.max(), var1.min()
-	#Format data into an image
-	outIm = np.array(var1, dtype=np.uint8).reshape(imgShape)
-	out = Image.fromarray(outIm)
-	out.show()
-
-	var1 = meanAppearance + (eigenFacesNorm[0,:])
-	print var1.max(), var1.min()
-	#Format data into an image
-	outIm = np.array(var1, dtype=np.uint8).reshape(imgShape)
-	out = Image.fromarray(outIm)
-	out.show()
-
+	#print variance
 
 	return AppearanceModel(meanAppearance, eigenFacesNorm, variance, imgShape)
 
