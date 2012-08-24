@@ -36,7 +36,7 @@ class ShapeModel:
 			shapeX += self.eigenShapes[row,:numPoints] * shapeParam * stdDevScaling
 			shapeY += self.eigenShapes[row,numPoints:] * shapeParam * stdDevScaling
 
-		final = np.vstack((shapeX, shapeY).transpose()
+		final = np.vstack((shapeX, shapeY)).transpose()
 		return final
 
 	def CalcTesselation(self):
