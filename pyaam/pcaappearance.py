@@ -36,11 +36,9 @@ class AppearanceModel:
 	def GenerateFace(self, eigenValues):
 		#Construct face from average and Eigenfaces
 		app = self.meanAppearance
-		#print self.eigenFaces.dtype
-		#for row, val in enumerate(eigenValues):
-		#	app = app + (self.eigenFaces[0,row] * val)
 		for row, val in enumerate(eigenValues):
-			app = app + (self.eigenFaces[row,:] * val)
+			stdDevScaling = (self.variances[row] ** 0.5)
+			app = app + (self.eigenFaces[row,:] * stdDevScaling * val)
 		
 		LimitPixelIntensity(app)
 
@@ -51,13 +49,9 @@ class AppearanceModel:
 
 def CalcApperanceModel(imageData, imgShape):
 	
-	#print imageData.min(), imageData.max()
-
 	#Zero centre the pixel data
 	meanAppearance = imageData.mean(axis=0)
 	imageDataCent = imageData - meanAppearance
-
-	#print imageDataCent.min(), imageDataCent.max()
 
 	#Use M. Turk and A. Pentland trick (A^T T) from Eigenfaces (1991)
 	#print imageDataCent.shape
