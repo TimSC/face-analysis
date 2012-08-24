@@ -25,16 +25,17 @@ class ShapeModel:
 		self.inTriangle, self.vertices = None, None
 		self.sizeImage = (400, 400)
 
-	def GenShape(self, shapeParam):
+	def GenShape(self, shapeParam, stdDevScaled = True):
 		#Generate shape from eigenvalues based on mean shape and eigenvectors
 		numPoints = self.meanShape.shape[0]
 		
 		shapeX = self.meanShape[:,0]
 		shapeY = self.meanShape[:,1]
 		for row, val in enumerate(shapeParam):
-			stdDevScaling = (self.variances[row] ** 0.5) #Scale by standard deviations
-			shapeX += self.eigenShapes[row,:numPoints] * shapeParam * stdDevScaling
-			shapeY += self.eigenShapes[row,numPoints:] * shapeParam * stdDevScaling
+			if stdDevScaled: stdDevScaling = (self.variances[row] ** 0.5) #Scale by standard deviations
+			else: stdDevScaling = 1.
+			shapeX += self.eigenShapes[row,:numPoints] * val * stdDevScaling
+			shapeY += self.eigenShapes[row,numPoints:] * val * stdDevScaling
 
 		final = np.vstack((shapeX, shapeY)).transpose()
 		return final

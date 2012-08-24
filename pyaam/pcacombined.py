@@ -1,5 +1,6 @@
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 class CombinedModel:
 	def __init__(self, shapeModel, appModel, eigenVec, variances, numShapeComp, numAppComp, shapeScaleFactor):
@@ -22,11 +23,19 @@ class CombinedModel:
 		shapeValues = result[:self.numShapeComp] / self.shapeScaleFactor
 		appValues = result[self.numShapeComp:]
 
-		img = self.appModel.GenerateFace(appValues, stdDevScaled = 0)
+		img = self.appModel.GenerateFace(appValues, stdDevScaled = False)
 		#img = self.appModel.GetAverageFace()
+
+		shape = self.shapeModel.GenShape(shapeValues, stdDevScaled = False)
+		plt.plot([pt[0] for pt in shape],[-pt[1] for pt in shape])
+		plt.show()
+
 		return img
 
 def CreateCombinedModel(shapeModel, appModel, shapePcaSpace, appPcaShape):
+
+	#From Statistical Models of Face Images - Improving Specificity
+	#by G.J. Edwards, A. Lanitis, C.J. Taylor, T. F. Cootes
 
 	#Scale shape to match the appearance variance
 	shapeVar = shapePcaSpace.var()
