@@ -37,7 +37,7 @@ class CombinedModel:
 		print shape
 		scaleShapeToImg = []
 		for pt in shape:
-			scaleShapeToImg.append(((pt[0]+0.5) * shapeFreeImg.size[0], (pt[1]+0.5) * shapeFreeImg.size[1]))
+			scaleShapeToImg.append(((pt[0]) * shapeFreeImg.size[0], (pt[1]) * shapeFreeImg.size[1]))
 
 		#Transform the shape free image and paste into the target image
 		self.shapeModel.CopyShapeFreeFaceToImg(targetIm, shapeFreeImg, scaleShapeToImg)

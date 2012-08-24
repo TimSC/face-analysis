@@ -116,7 +116,6 @@ class ShapeModel:
 
 	def CopyShapeFreeFaceToImg(self, targetIm, faceIm, shape):
 
-		pos = np.array(shape)
 		targetIml = targetIm.load()
 		faceIml = faceIm.load()
 		shape = np.array(shape)
@@ -128,7 +127,7 @@ class ShapeModel:
 		triAffines = []
 		for i, tri in enumerate(tess.vertices):
 			meanVertPos = np.hstack((self.meanShape[tri], np.ones((3,1)))).transpose()
-			shapeVertPos = np.hstack((pos[tri,:], np.ones((3,1)))).transpose()
+			shapeVertPos = np.hstack((shape[tri,:], np.ones((3,1)))).transpose()
 			affine = np.dot(meanVertPos, np.linalg.inv(shapeVertPos)) 
 			triAffines.append(affine)
 
@@ -144,6 +143,7 @@ class ShapeModel:
 
 				#Determine which tesselation triangle contains each pixel in the shape norm image
 				simp = tess.find_simplex([i, j])
+				if simp == -1: continue
 				affine = triAffines[simp]
 
 				#Calculate position in the input image
@@ -153,13 +153,20 @@ class ShapeModel:
 				#Scale normalised coordinate by image size
 				shapeFreeImgCoord = ((normImgCoord[0]+0.5)*faceIm.size[0], (normImgCoord[1]+0.5)*faceIm.size[1])
 
-				#print i, j, simp, shapeFreeImgCoord
-
 				try:
 					targetIml[i,j] = tuple(map(int,np.round(GetBilinearPixel(faceIm, faceIml, shapeFreeImgCoord))))
+					print i, j, simp, shapeFreeImgCoord
 				except IndexError:
-					pass
+					try:	
+						targetIml[i,j] = (128,128,128)
+					except:
+						pass
 
+		for pt in shape:
+			try:
+				targetIml[pt[0],pt[1]] = (255,255,255)
+			except:
+				pass
 
 def CalcShapeModel(shapeArr):
 
