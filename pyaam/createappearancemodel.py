@@ -22,9 +22,10 @@ if __name__ == "__main__":
 		imageData[imNum,:] = pix.reshape((pix.size,))
 
 	print "Performing PCA analysis"
-	appModel = pcaappearance.CalcApperanceModel(imageData, pix.shape)
+	appModel, appPcaSpace = pcaappearance.CalcApperanceModel(imageData, pix.shape)
 	
 	pickle.dump(appModel, open("appmodel.dat","wb"), protocol =  pickle.HIGHEST_PROTOCOL)
+	pickle.dump(appPcaSpace, open("appmodel.dat","wb"), protocol =  pickle.HIGHEST_PROTOCOL)
 
 	#print appModel.variances
 	#plt.plot(appModel.variances)

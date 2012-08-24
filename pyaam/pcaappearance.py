@@ -76,5 +76,8 @@ def CalcApperanceModel(imageData, imgShape):
 	variance = appPcaSpace.var(axis=1)
 	#print variance
 
-	return AppearanceModel(meanAppearance, eigenFacesNorm, variance, imgShape)
+	#Construct appearance model
+	appModel = AppearanceModel(meanAppearance, eigenFacesNorm, variance, imgShape)
+
+	return appModel, appPcaSpace
 

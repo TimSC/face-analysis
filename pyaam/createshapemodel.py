@@ -57,7 +57,7 @@ if __name__ == "__main__":
 	#plt.show()
 
 	#Perform PCA on shape
-	shapeModel = pcashape.CalcShapeModel(frameProc)
+	shapeModel, frameProcPcaSpace = pcashape.CalcShapeModel(frameProc)
 	#a = shapeModel.GenShape(-0.1)
 	#b = shapeModel.GenShape(0.)
 	#c = shapeModel.GenShape(.1)
@@ -65,6 +65,7 @@ if __name__ == "__main__":
 	shapeModel.CalcTesselation()
 
 	pickle.dump(shapeModel, open("shapemodel.dat","wb"), protocol =  pickle.HIGHEST_PROTOCOL)
+	pickle.dump(frameProcPcaSpace, open("shapepcaspace.dat","wb"), protocol =  pickle.HIGHEST_PROTOCOL)
 
 	#im = Image.open("/home/tim/dev/facedb/tim/cropped/100.jpg")
 	#shapeModel.NormaliseFace(im, posdata[99])

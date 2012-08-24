@@ -130,5 +130,5 @@ def CalcShapeModel(shapeArr):
 	variance = shapePcaSpace.var(axis=1)
 
 	shapeModel = ShapeModel(meanShape, v, variance)
-	return shapeModel
+	return shapeModel, shapePcaSpace
 
