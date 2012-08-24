@@ -20,7 +20,7 @@ if __name__ == "__main__":
 			imgNum = frameNum+1
 		else:
 			imgNum = -frameNum
-		im = Image.open("/home/tim/dev/facedb/tim/cropped/"+str(abs(frameNum)+1)+".jpg")
+		im = Image.open("/home/tim/dev/facedb/tim/cropped/"+str(imgNum)+".jpg")
 		shapefree = shapeModel.NormaliseFace(im, posdata[frameNum])
 		shapefree.save("shapefree/"+str(count)+".png")
 
