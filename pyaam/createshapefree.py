@@ -15,17 +15,27 @@ if __name__ == "__main__":
 	shapeModel = pickle.load(open("shapemodel.dat","rb"))
 
 	for count, frameNum in enumerate(posdata):
+
+		#Negative frame numbers imply a horizonally flipped image
 		print frameNum, len(posdata)
 		if frameNum >= 0:		
 			imgNum = frameNum+1
+			im = Image.open("/home/tim/dev/facedb/tim/cropped/"+str(imgNum)+".jpg")
 		else:
 			imgNum = -frameNum
-		im = Image.open("/home/tim/dev/facedb/tim/cropped/"+str(imgNum)+".jpg")
-
-		#Wrap around negative X coordinates 
+			im = Image.open("/home/tim/dev/facedb/tim/cropped/"+str(imgNum)+".jpg")
+			im = im.transpose(Image.FLIP_LEFT_RIGHT)
 		
+		#Wrap around negative X coordinates
+		framePos = posdata[frameNum] 
+		wrappedPos = []
+		for pt in framePos:
+			if frameNum < 0:
+				wrappedPos.append((im.size[0]+pt[0],pt[1]))
+			else:
+				wrappedPos.append((pt[0],pt[1]))
 
-		shapefree = shapeModel.NormaliseFace(im, posdata[frameNum])
+		shapefree = shapeModel.NormaliseFace(im, wrappedPos)
 		shapefree.save("shapefree/"+str(count)+".png")
 
 	print "All done!"

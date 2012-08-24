@@ -97,7 +97,9 @@ class ShapeModel:
 					#synthl[i,j] = iml[int(round(inImgCoord[0])),int(round(inImgCoord[1]))]
 
 					#Bilinear sampling
+					#print i,j,inImgCoord[0:2],im.size
 					synthl[i,j] = tuple(map(int,np.round(GetBilinearPixel(im, iml, inImgCoord[0:2]))))
+					#print synthl[i,j]
 				except IndexError:
 					pass
 
