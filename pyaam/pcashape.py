@@ -124,10 +124,10 @@ def CalcShapeModel(shapeArr):
 	u, s, v = np.linalg.svd(flattenedArr)
 
 	#Project shapes into PCA space
-	shapePcaSpace = np.dot(v, flattenedArr.transpose())
+	shapePcaSpace = np.dot(v, flattenedArr.transpose()).transpose()
 
 	#Calculate variance of variation mode
-	variance = shapePcaSpace.var(axis=1)
+	variance = shapePcaSpace.var(axis=0)
 
 	shapeModel = ShapeModel(meanShape, v, variance)
 	return shapeModel, shapePcaSpace

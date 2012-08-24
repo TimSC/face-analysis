@@ -1,11 +1,6 @@
 
-import pcaappearance, pcashape, pickle
+import pcaappearance, pcashape, pickle, pcacombined
 
-class CombinedModel:
-	def __init__(self):
-		pass
-		#self.shapeModel = shapeModel
-		#self.appModel = appModel
 
 if __name__ == "__main__":
 
@@ -21,8 +16,11 @@ if __name__ == "__main__":
 	print shapePcaSpace.shape
 	print appPcaShape.shape
 
+	combModel = pcacombined.CreateCombinedModel(shapeModel,\
+		appModel,\
+		shapePcaSpace.transpose(), appPcaShape.transpose())
 
-	combModel = CombinedModel()
+	
 
 
 	

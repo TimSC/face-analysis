@@ -70,10 +70,10 @@ def CalcApperanceModel(imageData, imgShape):
 	eigenFacesNorm = (eigenFaces.transpose() / rowMags).transpose()
 
 	#Project appearance features into PCA space
-	appPcaSpace = np.dot(eigenFacesNorm, imageDataCent.transpose())
+	appPcaSpace = np.dot(eigenFacesNorm, imageDataCent.transpose()).transpose()
 
 	#Calculate variance of variation mode
-	variance = appPcaSpace.var(axis=1)
+	variance = appPcaSpace.var(axis=0)
 	#print variance
 
 	#Construct appearance model
