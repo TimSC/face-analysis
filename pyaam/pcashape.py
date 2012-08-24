@@ -29,8 +29,8 @@ class ShapeModel:
 		#Generate shape from eigenvalues based on mean shape and eigenvectors
 		numPoints = self.meanShape.shape[0]
 		
-		shapeX = self.meanShape[:,0]
-		shapeY = self.meanShape[:,1]
+		shapeX = np.copy(self.meanShape[:,0])
+		shapeY = np.copy(self.meanShape[:,1])
 		for row, val in enumerate(shapeParam):
 			if stdDevScaled: stdDevScaling = (self.variances[row] ** 0.5) #Scale by standard deviations
 			else: stdDevScaling = 1.
@@ -116,6 +116,10 @@ class ShapeModel:
 
 	def CopyShapeFreeFaceToImg(self, targetIm, faceIm, shape):
 
+		#print self.meanShape
+		#plt.plot([pt[0] for pt in self.meanShape], [pt[1] for pt in self.meanShape])
+		#plt.show()
+
 		targetIml = targetIm.load()
 		faceIml = faceIm.load()
 		shape = np.array(shape)
@@ -128,6 +132,8 @@ class ShapeModel:
 		for i, tri in enumerate(tess.vertices):
 			meanVertPos = np.hstack((self.meanShape[tri], np.ones((3,1)))).transpose()
 			shapeVertPos = np.hstack((shape[tri,:], np.ones((3,1)))).transpose()
+			#print meanVertPos
+			#print shapeVertPos
 			affine = np.dot(meanVertPos, np.linalg.inv(shapeVertPos)) 
 			triAffines.append(affine)
 
@@ -138,6 +144,7 @@ class ShapeModel:
 		#Calculate pixel colours
 		for i in range(int(xmin), int(xmax+1)):
 			for j in range(int(ymin), int(ymax+1)):
+
 				#normSpaceCoordX = (i - xmin) / (xmax - xmin)
 				#normSpaceCoordY = (j - ymin) / (ymax - ymin)
 
@@ -151,22 +158,19 @@ class ShapeModel:
 				normImgCoord = np.dot(affine, homogCoord)
 
 				#Scale normalised coordinate by image size
-				shapeFreeImgCoord = ((normImgCoord[0]+0.5)*faceIm.size[0], (normImgCoord[1]+0.5)*faceIm.size[1])
+				shapeFreeImgCoord = ((normImgCoord[0])*faceIm.size[0], (normImgCoord[1])*faceIm.size[1])
 
 				try:
 					targetIml[i,j] = tuple(map(int,np.round(GetBilinearPixel(faceIm, faceIml, shapeFreeImgCoord))))
-					print i, j, simp, shapeFreeImgCoord
-				except IndexError:
-					try:	
-						targetIml[i,j] = (128,128,128)
-					except:
-						pass
+				except IndexError as ex:
+					pass
 
-		for pt in shape:
-			try:
-				targetIml[pt[0],pt[1]] = (255,255,255)
-			except:
-				pass
+		#Plot key points on target image
+		#for pt in shape:
+		#	try:
+		#		targetIml[pt[0],pt[1]] = (255,255,255)
+		#	except:
+		#		pass
 
 def CalcShapeModel(shapeArr):
 

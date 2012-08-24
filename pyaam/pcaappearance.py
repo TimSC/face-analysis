@@ -35,7 +35,7 @@ class AppearanceModel:
 
 	def GenerateFace(self, eigenValues, stdDevScaled = True):
 		#Construct face from average and Eigenfaces
-		app = self.meanAppearance
+		app = np.copy(self.meanAppearance)
 		for row, val in enumerate(eigenValues):
 			if stdDevScaled: stdDevScaling = (self.variances[row] ** 0.5)
 			else: stdDevScaling = 1.
