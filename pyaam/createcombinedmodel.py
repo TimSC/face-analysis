@@ -17,10 +17,8 @@ if __name__ == "__main__":
 	print appPcaShape.shape
 
 	combModel = pcacombined.CreateCombinedModel(shapeModel,\
-		appModel,\
-		shapePcaSpace.transpose(), appPcaShape.transpose())
+		appModel, shapePcaSpace, appPcaShape)
 
-	
-
-
+	im = combModel.GenerateFace([0.1])
+	im.show()
 	

@@ -21,6 +21,10 @@ if __name__ == "__main__":
 		else:
 			imgNum = -frameNum
 		im = Image.open("/home/tim/dev/facedb/tim/cropped/"+str(imgNum)+".jpg")
+
+		#Wrap around negative X coordinates 
+		
+
 		shapefree = shapeModel.NormaliseFace(im, posdata[frameNum])
 		shapefree.save("shapefree/"+str(count)+".png")
 
