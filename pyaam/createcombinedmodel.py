@@ -1,5 +1,5 @@
 
-import pcaappearance, pcashape, pickle, pcacombined, random
+import pcaappearance, pcashape, pickle, pcacombined
 import matplotlib.pyplot as plt
 import numpy as np
 
