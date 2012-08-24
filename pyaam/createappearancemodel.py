@@ -12,7 +12,6 @@ if __name__ == "__main__":
 	print "Loading images"
 	fiNames.sort()
 	for imNum, fiName in enumerate(fiNames):
-		print fiNames
 		im = Image.open(path+"/"+fiName)
 
 		#Convert to greyscale
