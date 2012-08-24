@@ -36,7 +36,7 @@ if __name__ == "__main__":
 				wrappedPos.append((pt[0],pt[1]))
 
 		shapefree = shapeModel.NormaliseFace(im, wrappedPos)
-		shapefree.save("shapefree/"+str(count)+".png")
+		shapefree.save("shapefree/{0:05d}.png".format(count))
 
 	print "All done!"
 

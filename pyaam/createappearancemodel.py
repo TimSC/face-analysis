@@ -10,7 +10,9 @@ if __name__ == "__main__":
 
 	#Load images into 2D numpy array by flattening each image to a row
 	print "Loading images"
+	fiNames.sort()
 	for imNum, fiName in enumerate(fiNames):
+		print fiNames
 		im = Image.open(path+"/"+fiName)
 
 		#Convert to greyscale
