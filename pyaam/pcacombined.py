@@ -31,12 +31,12 @@ class CombinedModel:
 		#plt.plot([pt[0] for pt in shape],[-pt[1] for pt in shape])
 		#plt.show()
 
-		targetIm = Image.new("RGB", (800,800))
+		targetIm = Image.new("RGB", shapeFreeImg.size)
 
 		#Scale coordinates to keep the output image the same as the shape free image
 		scaleShapeToImg = []
 		for pt in shape:
-			scaleShapeToImg.append(((pt[0]) * shapeFreeImg.size[0]+400., (pt[1]) * shapeFreeImg.size[1]+400.))
+			scaleShapeToImg.append(((pt[0]) * shapeFreeImg.size[0], (pt[1]) * shapeFreeImg.size[1]))
 
 		#Transform the shape free image and paste into the target image
 		self.shapeModel.CopyShapeFreeFaceToImg(targetIm, shapeFreeImg, scaleShapeToImg)

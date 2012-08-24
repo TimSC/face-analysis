@@ -1,6 +1,7 @@
 
-import pcaappearance, pcashape, pickle, pcacombined
+import pcaappearance, pcashape, pickle, pcacombined, random
 import matplotlib.pyplot as plt
+import numpy as np
 
 if __name__ == "__main__":
 
@@ -12,8 +13,8 @@ if __name__ == "__main__":
 	shapePcaSpace = pickle.load(open("shapepcaspace.dat","rb"))
 	appPcaShape = pickle.load(open("apppcaspace.dat","rb"))	
 
-	print shapePcaSpace.shape
-	print appPcaShape.shape
+	print "Size of shape features", shapePcaSpace.shape
+	print "Size of appearance features", appPcaShape.shape
 
 	#print shapeModel.meanShape
 	#plt.plot([pt[0] for pt in shapeModel.meanShape], [pt[1] for pt in shapeModel.meanShape])
@@ -22,5 +23,5 @@ if __name__ == "__main__":
 	combModel = pcacombined.CreateCombinedModel(shapeModel,\
 		appModel, shapePcaSpace, appPcaShape)
 
-	im = combModel.GenerateFace([2.0, -1.0, 0.5, 0.2, -0.1])
+	im = combModel.GenerateFace(np.random.rand((10)) * 4. - 2.)
 	im.show()
