@@ -43,6 +43,25 @@ class CombinedModel:
 
 		return targetIm
 
+	def NumComponentsNormalisedFace(self):
+		return self.numShapeComp + self.numAppComp
+
+	def TransformImageToNormalisedFace(self, im, combinedVals):
+		#Normalise face based on (extended) eigenvector	with position, scale and rotation	
+
+		#Convert from combined PCA space to appearance and shape PCA space
+		result = np.zeros((self.eigenVec.shape[1]))
+		for row, val in enumerate(combinedVals[4:]):
+			stdDevScaling = (self.variances[row] ** 0.5) #Scale by standard deviations
+			result += self.eigenVec[row,:] * val * stdDevScaling
+
+		shapeValues = result[:self.numShapeComp] / self.shapeScaleFactor
+		appValues = result[self.numShapeComp:]
+
+		shape = self.shapeModel.GenShape(shapeValues)
+		scaledShape = (2. * shape - 1.) * combinedVals[2] + (combinedVals[0], combinedVals[1])
+		return self.shapeModel.NormaliseFace(im, scaledShape)
+
 def CreateCombinedModel(shapeModel, appModel, shapePcaSpace, appPcaShape):
 
 	#From Statistical Models of Face Images - Improving Specificity

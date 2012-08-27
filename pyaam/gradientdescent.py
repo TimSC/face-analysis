@@ -1,4 +1,4 @@
-import pcashape, pcaappearance, pickle, time
+import pcacombined, pickle, time
 from PIL import Image
 import numpy as np
 import scipy.optimize as opt
@@ -14,46 +14,54 @@ def DifferenceIm(im1, im2):
 	outIm = np.array(diff, dtype=np.uint8)
 	return Image.fromarray(outIm)	
 
-def Eval(eigVec, targetImg, appearanceModel):
+def Eval(eigVec, targetImg, combinedModel):
 	print eigVec
-	im1 = appearanceModel.GenerateFace(eigVec[4:])
-	im2 = shapeModel.GetNormFaceFromEigVec(test, eigVec[0:4])
+
+	#Warp target image and get shape free face
+	im2 = combinedModel.TransformImageToNormalisedFace(targetImg, eigVec)
+	im2.show()
+
+	#Generate shape free appearance from eigenvector
+	im1 = combinedModel.GenerateFace(eigVec[5:])
+	im1.show()
+
+	#Calculate difference
 	arr1 = np.asarray(im1)
 	arr2 = np.asarray(im2)
 	diff = arr1 - arr2
-	print np.power(diff,1.).sum()
-	#print np.abs(diff)
-	return np.abs(diff).reshape(diff.size).sum()
+	print np.abs(diff).mean()
+	return np.abs(diff).reshape(diff.size).mean()
 
 if __name__ == "__main__":
-	shapeModel = pickle.load(open("shapemodel.dat","rb"))
-	appearanceModel = pickle.load(open("appmodel.dat","rb"))
-	#test = Image.open("shapefree/99.png")
-	test = Image.open("/home/tim/dev/facedb/tim/cropped/100.jpg")
+	combinedModel = pickle.load(open("combinedmodel.dat","rb"))
+	#targetImg = Image.open("shapefree/99.png")
+	targetImg = Image.open("/home/tim/dev/facedb/tim/cropped/100.jpg")
 
-	
+	#im = combinedModel.GenerateFace([0.])
 	#im.show()
-	#exit(0)
 
-	#im = appearanceModel.GenerateFace([0.])
-	#im.show()
+	numComponentsNormalisedFace = combinedModel.NumComponentsNormalisedFace()
+
 	#DifferenceIm(im, test).show()
-	initial = np.zeros((20,))
-	initial[0] = 550.
-	initial[1] = 570.
-	initial[2] = 300.
+	initial = np.zeros((10,))
+	initial[0] = 550. #Horizontal position
+	initial[1] = 570. #Vertical position
+	initial[2] = 300. #Scale
+	initial[2] = 0. #Rotation
 
-	result = opt.fmin_powell(Eval, initial, args = (test, appearanceModel))
+	#Fit model to target image by gradient descent
+	result = opt.fmin_powell(Eval, initial, args = (targetImg, combinedModel))
 
+	#Report result
 	print result
-	print "Cost", Eval(result, test, appearanceModel).sum()
+	print "Cost", Eval(result, targetImg, combinedModel).mean()
 
 	#print "x", result.tolist()
 	time.sleep(1.)
 
-	im = appearanceModel.GenerateFace(result)
+	im = combinedModel.GenerateFace(result)
 	im.show()
 
-	diffIm = DifferenceIm(im, test)
+	diffIm = DifferenceIm(im, targetImg)
 	diffIm.show()
 
