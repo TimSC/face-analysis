@@ -17,8 +17,8 @@ def DifferenceIm(im1, im2):
 evalCount = 0
 
 def Eval(eigVec, targetImg, combinedModel):
-	print eigVec
 	global evalCount
+	print evalCount, eigVec
 
 	#Warp target image and get shape free face
 	im2 = combinedModel.TransformImageToNormalisedFace(targetImg, eigVec)
@@ -33,22 +33,53 @@ def Eval(eigVec, targetImg, combinedModel):
 	#Calculate difference
 	arr1 = np.asarray(im1)
 	arr2 = np.asarray(im2)
-	diff = arr1 - arr2
+	diff = np.array(arr1, dtype=np.float) - np.array(arr2, dtype=np.float)
 	
 	#Ignore areas in synthetic appearance that are black
 	filteredDiff = []
+	#diffImg = Image.new("RGB",im1.size)
+	#test1 = Image.new("RGB",im1.size)
+	#test2 = Image.new("RGB",im1.size)
+	#diffImgL = diffImg.load()
+	#test1L = test1.load()
+	#test2L = test2.load()
+
 	for i in range(arr1.shape[0]):
 		for j in range(arr1.shape[1]):
 			black = True
 			for k in range(arr1.shape[2]):
+				
 				if arr1[i,j,k] != 0:
 					black = False
+
 			if not black:
 				filteredDiff.append(diff[i,j,k])
+				#for k in range(arr1.shape[2]):
+				#	current = list(diffImgL[i,j])
+				#	current[k] = int(round(abs(diff[i,j,k])))
+				#	diffImgL[i,j] = tuple(current)
+
+				#for k in range(arr1.shape[2]):
+				#	current = list(test1L[i,j])
+				#	current[k] = abs(arr1[i,j,k])
+				#	test1L[i,j] = tuple(current)
+
+				#for k in range(arr1.shape[2]):
+				#	current = list(test2L[i,j])
+				#	current[k] = abs(arr2[i,j,k])
+				#	test2L[i,j] = tuple(current)
+
+	#print test1L[120,120]
+	#print test2L[120,120]
+	#print diffImgL[120,120]
+
+	#test1.show()
+	#test2.show()
+	#diffImg.show()
 	filteredDiff = np.array(filteredDiff)
 
 	evalCount += 1
-	meanDiff = np.abs(filteredDiff).mean()
+	meanDiff = np.abs(filteredDiff).mean() #Take mean absolute difference
 	print meanDiff
 	return meanDiff
 
@@ -64,8 +95,8 @@ if __name__ == "__main__":
 
 	#DifferenceIm(im, test).show()
 	initial = np.zeros((10,))
-	initial[0] = 510. #Horizontal position
-	initial[1] = 695. #Vertical position
+	initial[0] = 695. #Position
+	initial[1] = 510.
 	initial[2] = 240. #Scale
 	initial[3] = 0. #Rotation
 

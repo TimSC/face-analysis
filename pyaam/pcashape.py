@@ -60,12 +60,12 @@ class ShapeModel:
 		#	plt.plot(pos[:,0], pos[:,1])
 		#plt.show()
 
-	def TransformImageToNormalisedFace(self, im, vec):
-		#Normalise face based on (extended) eigenvector	with position, scale and rotation	
-
-		shape = self.GenShape(vec[4:])
-		scaledShape = (2. * shape - 1.) * vec[2] + (vec[0], vec[1])
-		return self.NormaliseFace(im, scaledShape)
+	#def TransformImageToNormalisedFace(self, im, vec):
+	#	#Normalise face based on (extended) eigenvector	with position, scale and rotation	
+	#
+	#	shape = self.GenShape(vec[4:])
+	#	scaledShape = (2. * shape - 1.) * vec[2] + (vec[0], vec[1])
+	#	return self.NormaliseFace(im, scaledShape)
 
 	def NormaliseFace(self, im, pos):
 		#Normalise face based on image position points

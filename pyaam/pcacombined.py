@@ -59,7 +59,7 @@ class CombinedModel:
 		appValues = result[self.numShapeComp:]
 
 		shape = self.shapeModel.GenShape(shapeValues)
-		scaledShape = (2. * shape - 1.) * combinedVals[2] + (combinedVals[0], combinedVals[1])
+		scaledShape = (2. * shape - 1.) * combinedVals[2] + (combinedVals[1], combinedVals[0])
 		return self.shapeModel.NormaliseFace(im, scaledShape)
 
 def CreateCombinedModel(shapeModel, appModel, shapePcaSpace, appPcaShape):
