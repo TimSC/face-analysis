@@ -68,6 +68,11 @@ class CombinedModel:
 		translatedShape = np.array(rotatedShape) + (combinedVals[0], combinedVals[1])
 		return self.shapeModel.NormaliseFace(im, translatedShape)
 
+	def NormaliseFace(self, im, pos):
+		#Return a shape free face based on annotated positions
+
+		return self.shapeModel.NormaliseFace(im, pos)
+
 def CreateCombinedModel(shapeModel, appModel, shapePcaSpace, appPcaShape):
 
 	#From Statistical Models of Face Images - Improving Specificity
