@@ -1,4 +1,4 @@
-
+import math
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
@@ -59,8 +59,14 @@ class CombinedModel:
 		appValues = result[self.numShapeComp:]
 
 		shape = self.shapeModel.GenShape(shapeValues)
-		scaledShape = (2. * shape - 1.) * combinedVals[2] + (combinedVals[1], combinedVals[0])
-		return self.shapeModel.NormaliseFace(im, scaledShape)
+		scaledShape = (shape - 0.5) * combinedVals[2] 
+
+		rotatedShape = []
+		for pt in scaledShape:
+			angr = math.radians(combinedVals[3])
+			rotatedShape.append((pt[0]*math.cos(angr)-pt[1]*math.sin(angr), pt[0]*math.sin(angr)+pt[1]*math.cos(angr)))
+		translatedShape = np.array(rotatedShape) + (combinedVals[0], combinedVals[1])
+		return self.shapeModel.NormaliseFace(im, translatedShape)
 
 def CreateCombinedModel(shapeModel, appModel, shapePcaSpace, appPcaShape):
 
