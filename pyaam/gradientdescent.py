@@ -37,13 +37,6 @@ def Eval(eigVec, targetImg, combinedModel):
 	
 	#Ignore areas in synthetic appearance that are black
 	filteredDiff = []
-	#diffImg = Image.new("RGB",im1.size)
-	#test1 = Image.new("RGB",im1.size)
-	#test2 = Image.new("RGB",im1.size)
-	#diffImgL = diffImg.load()
-	#test1L = test1.load()
-	#test2L = test2.load()
-
 	for i in range(arr1.shape[0]):
 		for j in range(arr1.shape[1]):
 			black = True
@@ -54,28 +47,6 @@ def Eval(eigVec, targetImg, combinedModel):
 
 			if not black:
 				filteredDiff.append(diff[i,j,k])
-				#for k in range(arr1.shape[2]):
-				#	current = list(diffImgL[i,j])
-				#	current[k] = int(round(abs(diff[i,j,k])))
-				#	diffImgL[i,j] = tuple(current)
-
-				#for k in range(arr1.shape[2]):
-				#	current = list(test1L[i,j])
-				#	current[k] = abs(arr1[i,j,k])
-				#	test1L[i,j] = tuple(current)
-
-				#for k in range(arr1.shape[2]):
-				#	current = list(test2L[i,j])
-				#	current[k] = abs(arr2[i,j,k])
-				#	test2L[i,j] = tuple(current)
-
-	#print test1L[120,120]
-	#print test2L[120,120]
-	#print diffImgL[120,120]
-
-	#test1.show()
-	#test2.show()
-	#diffImg.show()
 	filteredDiff = np.array(filteredDiff)
 
 	evalCount += 1
