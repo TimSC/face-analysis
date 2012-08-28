@@ -16,18 +16,8 @@ class CombinedModel:
 	def GenerateFace(self, combinedVals):
 	
 		#Convert from combined PCA space to appearance and shape PCA space
-		result = np.zeros((self.eigenVec.shape[1]))
-		for row, val in enumerate(combinedVals):
-			stdDevScaling = (self.variances[row] ** 0.5) #Scale by standard deviations
-			result += self.eigenVec[row,:] * val * stdDevScaling
+		shapeFreeImg, shape = self.EigenVecToNormFaceAndShape(combinedVals)
 
-		shapeValues = result[:self.numShapeComp] / self.shapeScaleFactor
-		appValues = result[self.numShapeComp:]
-
-		shapeFreeImg = self.appModel.GenerateFace(appValues, stdDevScaled = False)
-		#img = self.appModel.GetAverageFace()
-
-		shape = self.shapeModel.GenShape(shapeValues, stdDevScaled = False)
 		#plt.plot([pt[0] for pt in shape],[-pt[1] for pt in shape])
 		#plt.show()
 
@@ -81,15 +71,40 @@ class CombinedModel:
 		#Shape to PCA space
 		shapeVals = self.shapeModel.ShapeToEigenVec(shape)
 
+		#Scale shape values
+		shapeValsScaled = shapeVals * self.shapeScaleFactor
 
-	def EigenVecToNormFaceAndShape(self, vals):
+		#Convert to combined vector
+		comb = np.hstack((shapeValsScaled, appearanceVals))
+		
+		#Project shapes into combined PCA space
+		combPcaSpace = np.dot(self.eigenVec, comb.transpose()).transpose()
+
+		#Scale by variance
+		scaleComb = []
+		for i, val in enumerate(combPcaSpace):
+			scaleComb.append(val / (self.variances[i] ** 0.5))
+
+		return scaleComb
+
+	def EigenVecToNormFaceAndShape(self, combinedVals):
+
+		#Convert from combined PCA space to appearance and shape PCA space
+		result = np.zeros((self.eigenVec.shape[1]))
+		for row, val in enumerate(combinedVals):
+			stdDevScaling = (self.variances[row] ** 0.5) #Scale by standard deviations
+			result += self.eigenVec[row,:] * val * stdDevScaling
+
+		shapeValues = result[:self.numShapeComp] / self.shapeScaleFactor
+		appValues = result[self.numShapeComp:]
+
 		#Reconstruct appearance
-		synthApp = self.appModel.GenerateFace(appearanceVals, False)
+		synthApp = self.appModel.GenerateFace(appValues, False)
 
 		#Reconstruct shape
-		synthShape = self.shapeModel.GenShape(shapeVals, False)
+		synthShape = self.shapeModel.GenShape(shapeValues, False)
 
-		synthApp.show()
+		return synthApp, synthShape
 
 def CreateCombinedModel(shapeModel, appModel, shapePcaSpace, appPcaShape):
 

@@ -43,6 +43,7 @@ if __name__ == "__main__":
 
 	#Reconstruct face
 	synthApp, synthShape = combinedModel.EigenVecToNormFaceAndShape(vals)
+	synthApp.show()
 
 	#Paint synthetic face back on to original image
 	#TODO
