@@ -1,4 +1,4 @@
-import readposdata, procrustes, pcashape, pickle
+import picseqloader, procrustes, pcashape, pickle
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
@@ -25,20 +25,13 @@ def RescaleXYZeroToOne(posdataArr):
 
 
 if __name__ == "__main__":
-	posdata = readposdata.ReadPosData(open("/home/tim/dev/facedb/tim/marks.dat"))
-	idReflection = [9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 22, 21, 20, 19, 18, 25, 24,\
-		 23, 14, 13, 12, 11, 10, 17, 16, 15, 36, 35, 34, 33, 32, 31, 30, 29,\
-		 28, 27, 26, 41, 40, 39, 38, 37, 44, 43, 42, 57, 56, 55, 54, 53, 52,\
-		 51, 50, 49, 48, 47, 46, 45]
-
-	posdata2 = readposdata.ReadPosDataMirror(open("/home/tim/dev/facedb/tim/marks.dat"), idReflection)
-	posdata.update(posdata2)
+	(pics, posData) = picseqloader.LoadTimDatabase()
 
 	#Convert to 3D matrix, first axis are frames, second axis selects the point, third axis is X or Y selector
-	numPoints = len(posdata[posdata.keys()[0]])
-	posdataArr = np.empty((len(posdata), numPoints, 2))
-	for countFrame, frameNum in enumerate(posdata):
-		for ptNum, pt in enumerate(posdata[frameNum]):
+	numPoints = len(posData[0])
+	posdataArr = np.empty((len(posData), numPoints, 2))
+	for countFrame, framePos in enumerate(posData):
+		for ptNum, pt in enumerate(framePos):
 			posdataArr[countFrame, ptNum, 0] = pt[0]
 			posdataArr[countFrame, ptNum, 1] = pt[1]
 
