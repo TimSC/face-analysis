@@ -1,4 +1,4 @@
-import math
+import math, procrustes
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
@@ -65,11 +65,14 @@ class CombinedModel:
 
 	def NormalisedFaceAndShapeToEigenVec(self, normFace, shape):
 		
+		#Do procrustes on input shape
+		procShape, procParams = procrustes.DoProcustesOnShape(shape, self.shapeModel.meanShape)
+
 		#Appearance to PCA space
 		appearanceVals = self.appModel.NormalisedFaceToEigenVals(normFace)
 
 		#Shape to PCA space
-		shapeVals = self.shapeModel.ShapeToEigenVec(shape)
+		shapeVals = self.shapeModel.ShapeToEigenVec(procShape)
 
 		#Scale shape values
 		shapeValsScaled = shapeVals * self.shapeScaleFactor

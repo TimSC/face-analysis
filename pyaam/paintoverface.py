@@ -41,8 +41,15 @@ if __name__ == "__main__":
 	#Convert normalised face and shape to combined model eigenvalues
 	vals = combinedModel.NormalisedFaceAndShapeToEigenVec(shapefree, wrappedPos)
 
+	vals2 = []
+	for i, v in enumerate(vals):
+		if i < 20:
+			vals2.append(v)
+		else:
+			vals2.append(v)
+
 	#Reconstruct face
-	synthApp, synthShape = combinedModel.EigenVecToNormFaceAndShape(vals)
+	synthApp, synthShape = combinedModel.EigenVecToNormFaceAndShape(vals2)
 	synthApp.show()
 
 	#Paint synthetic face back on to original image

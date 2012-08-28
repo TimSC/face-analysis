@@ -60,6 +60,46 @@ def CalcProcrustesOnFrame(frameArr, targetArr):
 
 	return frameFinal
 
+def DoProcustesOnShape(frameShape, targetShape):
+	#Perform Procrustes analysis
+
+	targetArr = np.array(targetShape)
+
+	targetCent = targetShape.mean(axis=0)
+	frameCent = frameShape.mean(axis=0)
+
+	#Zero centre frame
+	targetZeroCent = targetArr - targetCent
+	frameZeroCent = frameArr - frameCent
+
+	#Calculate RMS for distance of points to the origin
+	targetSquaredDistance = np.power(targetZeroCent, 2.).sum(axis=1)
+	targetRmsd = targetSquaredDistance.mean() ** 0.5
+	frameSquaredDistance = np.power(frameZeroCent, 2.).sum(axis=1)
+	frameRmsd = frameSquaredDistance.mean() ** 0.5
+
+	#Scale the frame to match the target shape
+	if frameRmsd > 0.:
+		frameScaled = frameZeroCent * targetRmsd / frameRmsd
+	else:
+		frameScaled = frameZeroCent
+
+	#Find the rotation that minimises the RMS difference
+	#Possibly improve this by using the Jacobian of the angle
+	optRet = opt.leastsq(EvalRms, (0.), args=(frameScaled, targetZeroCent))
+	ang = optRet[0][0]
+
+	#Rotate frame points
+	frameRot = []
+	for pt in frameScaled:
+		prx = pt[0] * math.cos(ang) - pt[1] * math.sin(ang)
+		pry = pt[0] * math.sin(ang) + pt[1] * math.cos(ang)		
+		frameRot.append((prx, pry))
+
+	#Translate to target centeroid
+	frameFinal = frameRot + targetCent
+	
+
 def CalcProcrustes(posdata, targetShape):
 	out = np.empty(posdata.shape)
 	for rowNum in range(posdata.shape[0]):
