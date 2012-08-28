@@ -14,8 +14,6 @@ def DifferenceIm(im1, im2):
 	outIm = np.array(diff, dtype=np.uint8)
 	return Image.fromarray(outIm)	
 
-evalCount = 0
-
 def Eval(eigVec, targetImg, combinedModel):
 	global evalCount
 	print evalCount, eigVec
@@ -55,6 +53,7 @@ def Eval(eigVec, targetImg, combinedModel):
 	return meanDiff
 
 if __name__ == "__main__":
+	evalCount = 0
 	combinedModel = pickle.load(open("combinedmodel.dat","rb"))
 	#targetImg = Image.open("shapefree/99.png")
 	targetImg = Image.open("/home/tim/dev/facedb/tim/cropped/100.jpg")
