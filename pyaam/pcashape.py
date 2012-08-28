@@ -176,6 +176,18 @@ class ShapeModel:
 		#	except:
 		#		pass
 
+	def ShapeToEigenVec(self, shape):
+		#Subtract mean shape
+		centreShape = shape - self.meanShape
+
+		#Convert to 1D array
+		flattenedArr = np.hstack((centreShape[:,0],centreShape[:,1]))
+		
+		#Project shapes into PCA space
+		shapePcaSpace = np.dot(self.eigenShapes, flattenedArr.transpose()).transpose()		
+
+		return shapePcaSpace
+
 def CalcShapeModel(shapeArr):
 
 	#Prepare for PCA by subtracting the mean shape

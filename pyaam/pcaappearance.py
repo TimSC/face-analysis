@@ -46,7 +46,19 @@ class AppearanceModel:
 		#Format data into an image
 		outIm = np.array(app, dtype=np.uint8).reshape(self.imgShape)
 		out = Image.fromarray(outIm)
-		return out		
+		return out
+	
+	def NormalisedFaceToEigenVals(self, normFace):
+		#Convert to numpy 1D array
+		pix = np.asarray(normFace)
+		imageData = pix.reshape((pix.size,))
+
+		#Subtract mean appearance
+		imageCent = imageData - self.meanAppearance
+
+		#Project appearance features into PCA space
+		appPcaSpace = np.dot(self.eigenFaces, imageCent.transpose()).transpose()
+		return appPcaSpace
 
 def CalcApperanceModel(imageData, imgShape):
 	

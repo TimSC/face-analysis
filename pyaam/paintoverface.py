@@ -18,7 +18,6 @@ if __name__ == "__main__":
 	framePos = posdata[0]
 
 	#Negative frame numbers imply a horizonally flipped image
-	print frameNum, len(posdata)
 	if frameNum >= 0:		
 		imgNum = frameNum+1
 		im = Image.open("/home/tim/dev/facedb/tim/cropped/"+str(imgNum)+".jpg")
@@ -37,6 +36,14 @@ if __name__ == "__main__":
 			wrappedPos.append((pt[0],pt[1]))
 
 	#Get shape free face
-	shapefree = combinedModel.NormaliseFace(im, wrappedPos)
-	shapefree.show()
+	shapefree = combinedModel.ImageToNormaliseFace(im, wrappedPos)
+
+	#Convert normalised face and shape to combined model eigenvalues
+	vals = combinedModel.NormalisedFaceAndShapeToEigenVec(shapefree, wrappedPos)
+
+	#Reconstruct face
+	synthApp, synthShape = combinedModel.EigenVecToNormFaceAndShape(vals)
+
+	#Paint synthetic face back on to original image
+	#TODO
 

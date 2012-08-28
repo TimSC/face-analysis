@@ -68,10 +68,28 @@ class CombinedModel:
 		translatedShape = np.array(rotatedShape) + (combinedVals[0], combinedVals[1])
 		return self.shapeModel.NormaliseFace(im, translatedShape)
 
-	def NormaliseFace(self, im, pos):
+	def ImageToNormaliseFace(self, im, pos):
 		#Return a shape free face based on annotated positions
 
 		return self.shapeModel.NormaliseFace(im, pos)
+
+	def NormalisedFaceAndShapeToEigenVec(self, normFace, shape):
+		
+		#Appearance to PCA space
+		appearanceVals = self.appModel.NormalisedFaceToEigenVals(normFace)
+
+		#Shape to PCA space
+		shapeVals = self.shapeModel.ShapeToEigenVec(shape)
+
+
+	def EigenVecToNormFaceAndShape(self, vals):
+		#Reconstruct appearance
+		synthApp = self.appModel.GenerateFace(appearanceVals, False)
+
+		#Reconstruct shape
+		synthShape = self.shapeModel.GenShape(shapeVals, False)
+
+		synthApp.show()
 
 def CreateCombinedModel(shapeModel, appModel, shapePcaSpace, appPcaShape):
 
