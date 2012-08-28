@@ -24,8 +24,10 @@ def CalcProcrustesOnFrame(frameArr, targetArr):
 	#Perform Procrustes analysis
 
 	#Calc centeroids
-	targetCent = targetArr.mean(axis=0)
-	frameCent = frameArr.mean(axis=0)
+	params = []
+	targetCent = np.array(targetArr).mean(axis=0)
+	frameCent = np.array(frameArr).mean(axis=0)
+	params.extend(frameCent)
 
 	#Zero centre frame
 	targetZeroCent = targetArr - targetCent
@@ -39,14 +41,17 @@ def CalcProcrustesOnFrame(frameArr, targetArr):
 
 	#Scale the frame to match the target shape
 	if frameRmsd > 0.:
-		frameScaled = frameZeroCent * targetRmsd / frameRmsd
+		scaling = targetRmsd / frameRmsd
 	else:
-		frameScaled = frameZeroCent
+		scaling = 1.
+	frameScaled = frameZeroCent * scaling
+	params.append(1./scaling)
 
 	#Find the rotation that minimises the RMS difference
 	#Possibly improve this by using the Jacobian of the angle
 	optRet = opt.leastsq(EvalRms, (0.), args=(frameScaled, targetZeroCent))
 	ang = optRet[0][0]
+	params.append(math.degrees(-ang))
 
 	#Rotate frame points
 	frameRot = []
@@ -58,51 +63,11 @@ def CalcProcrustesOnFrame(frameArr, targetArr):
 	#Translate to target centeroid
 	frameFinal = frameRot + targetCent
 
-	return frameFinal
-
-def DoProcustesOnShape(frameShape, targetShape):
-	#Perform Procrustes analysis
-
-	targetArr = np.array(targetShape)
-
-	targetCent = targetShape.mean(axis=0)
-	frameCent = frameShape.mean(axis=0)
-
-	#Zero centre frame
-	targetZeroCent = targetArr - targetCent
-	frameZeroCent = frameArr - frameCent
-
-	#Calculate RMS for distance of points to the origin
-	targetSquaredDistance = np.power(targetZeroCent, 2.).sum(axis=1)
-	targetRmsd = targetSquaredDistance.mean() ** 0.5
-	frameSquaredDistance = np.power(frameZeroCent, 2.).sum(axis=1)
-	frameRmsd = frameSquaredDistance.mean() ** 0.5
-
-	#Scale the frame to match the target shape
-	if frameRmsd > 0.:
-		frameScaled = frameZeroCent * targetRmsd / frameRmsd
-	else:
-		frameScaled = frameZeroCent
-
-	#Find the rotation that minimises the RMS difference
-	#Possibly improve this by using the Jacobian of the angle
-	optRet = opt.leastsq(EvalRms, (0.), args=(frameScaled, targetZeroCent))
-	ang = optRet[0][0]
-
-	#Rotate frame points
-	frameRot = []
-	for pt in frameScaled:
-		prx = pt[0] * math.cos(ang) - pt[1] * math.sin(ang)
-		pry = pt[0] * math.sin(ang) + pt[1] * math.cos(ang)		
-		frameRot.append((prx, pry))
-
-	#Translate to target centeroid
-	frameFinal = frameRot + targetCent
-	
+	return frameFinal, params
 
 def CalcProcrustes(posdata, targetShape):
 	out = np.empty(posdata.shape)
 	for rowNum in range(posdata.shape[0]):
-		out[rowNum,:,:] = CalcProcrustesOnFrame(posdata[rowNum,:], targetShape)
+		out[rowNum,:,:], params = CalcProcrustesOnFrame(posdata[rowNum,:], targetShape)
 	return out
 

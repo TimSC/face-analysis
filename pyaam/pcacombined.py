@@ -66,7 +66,7 @@ class CombinedModel:
 	def NormalisedFaceAndShapeToEigenVec(self, normFace, shape):
 		
 		#Do procrustes on input shape
-		procShape, procParams = procrustes.DoProcustesOnShape(shape, self.shapeModel.meanShape)
+		procShape, procParams = procrustes.CalcProcrustesOnFrame(shape, self.shapeModel.meanShape)
 
 		#Appearance to PCA space
 		appearanceVals = self.appModel.NormalisedFaceToEigenVals(normFace)
@@ -88,9 +88,12 @@ class CombinedModel:
 		for i, val in enumerate(combPcaSpace):
 			scaleComb.append(val / (self.variances[i] ** 0.5))
 
-		return scaleComb
+		return np.concatenate((procParams, scaleComb))
 
-	def EigenVecToNormFaceAndShape(self, combinedVals):
+	def EigenVecToNormFaceAndShape(self, extendedVals):
+
+		procParams = extendedVals[:4]
+		combinedVals = extendedVals[4:]
 
 		#Convert from combined PCA space to appearance and shape PCA space
 		result = np.zeros((self.eigenVec.shape[1]))
@@ -107,7 +110,26 @@ class CombinedModel:
 		#Reconstruct shape
 		synthShape = self.shapeModel.GenShape(shapeValues, False)
 
-		return synthApp, synthShape
+		#Transform shape based on procrustes parameters
+		#Zero centre
+		synthShapeCent = synthShape - synthShape.mean(axis=0)
+		
+		#Scale shape
+		scaledShape = synthShapeCent * procParams[2]
+
+		#Rotate shape
+		rotatedShape = []
+		for pt in scaledShape:
+			angr = math.radians(procParams[3])
+			rotatedShape.append((pt[0]*math.cos(angr)-pt[1]*math.sin(angr), pt[0]*math.sin(angr)+pt[1]*math.cos(angr)))
+
+		#Translate shape
+		finalShape = np.array(rotatedShape) + (procParams[0], procParams[1])
+
+		return synthApp, finalShape
+
+	def CopyShapeFreeFaceToImg(self, targetIm, faceIm, shape):
+		return self.shapeModel.CopyShapeFreeFaceToImg(targetIm, faceIm, shape)
 
 def CreateCombinedModel(shapeModel, appModel, shapePcaSpace, appPcaShape):
 
