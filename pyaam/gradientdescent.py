@@ -98,7 +98,7 @@ if __name__ == "__main__":
 	initial[0] = 510. #Position horizontal
 	initial[1] = 695. #vertical
 	initial[2] = 480. #Scale
-	initial[3] = -180. #Rotation
+	initial[3] = 0. #Rotation
 
 	#Fit model to target image by gradient descent
 	result = opt.fmin_powell(Eval, initial, args = (targetImg, combinedModel))
