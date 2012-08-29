@@ -1,7 +1,7 @@
 import pickle, picseqloader, pcacombined, random
 from PIL import Image
 import numpy as np
-
+import matplotlib.pyplot as plt
 
 def CalculateOffsetEffect(combinedModel, vals, im, shapefree, pixelSubset):
 
@@ -51,9 +51,9 @@ if __name__ == "__main__":
 	combinedModel = pickle.load(open("combinedmodel.dat","rb"))
 	(pics, posData) = picseqloader.LoadTimDatabase()
 
-	if 1:
-		im = pics[0]
-		framePos = posData[0]
+	perturbs = []
+	diffVals = []
+	for frameCount, (framePos, im) in enumerate(zip(posData, pics)):
 
 		#Get shape free face
 		shapefree = combinedModel.ImageToNormaliseFace(im, framePos)
@@ -68,24 +68,30 @@ if __name__ == "__main__":
 		for i in range(shapefree.size[0]):
 			for j in range(shapefree.size[1]):
 				pixList.append((i,j))
-		pixelSubset = random.sample(pixList, 100)
+		pixelSubset = random.sample(pixList, 200)
 
-	if 1:
-		perturbs = []
-		diffVals = []
-		for i in range(100):
-			print i
+		for trainCount in range(100):
+			print frameCount, trainCount
 			perturb, diffVal = CalculateOffsetEffect(combinedModel, vals, im, shapefree, pixelSubset)
 			perturbs.append(perturb)
 			diffVals.append(diffVal)
 	
-		pickle.dump(perturbs, open("perturbs.dat","wb"), protocol =  pickle.HIGHEST_PROTOCOL)
-		pickle.dump(diffVals, open("diffVals.dat","wb"), protocol =  pickle.HIGHEST_PROTOCOL)
+	pickle.dump(perturbs, open("perturbs.dat","wb"), protocol =  pickle.HIGHEST_PROTOCOL)
+	pickle.dump(diffVals, open("diffVals.dat","wb"), protocol =  pickle.HIGHEST_PROTOCOL)
 
 	if 1:	
 		perturbs = pickle.load(open("perturbs.dat","rb"))
 		diffVals = pickle.load(open("diffVals.dat","rb"))
 
-		print len(perturbs)
-		print len(diffVals)
+		perturbs = np.array(perturbs)
+		diffVals = np.array(diffVals)
+
+		leastSqFit = np.linalg.lstsq(diffVals[:80,:], perturbs[:80,:])
+
+		predict = np.dot(diffVals[80:,:], leastSqFit[0])
+	
+		col = 3
+		print np.corrcoef(perturbs[80:,col], predict[:,col])
+		plt.plot(perturbs[80:,col], predict[:,col])
+		plt.show()
 
