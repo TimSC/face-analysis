@@ -27,6 +27,8 @@ if __name__ == "__main__":
 
 	#Get meta data
 	for photoId in photoIds:
+		photoAnnot = annotation["flickr"+photoId]
+		if 'meta' in photoAnnot: continue
 		print "Getting meta data for", photoId
 		info = flickr.photos_getInfo(photo_id=photoId)
 		for photo in info:
