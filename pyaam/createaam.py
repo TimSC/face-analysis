@@ -54,6 +54,7 @@ if __name__ == "__main__":
 	perturbs = []
 	diffVals = []
 	for frameCount, (framePos, im) in enumerate(zip(posData, pics)):
+		if frameCount > 0: continue
 
 		#Get shape free face
 		shapefree = combinedModel.ImageToNormaliseFace(im, framePos)
@@ -70,7 +71,7 @@ if __name__ == "__main__":
 				pixList.append((i,j))
 		pixelSubset = random.sample(pixList, 200)
 
-		for trainCount in range(100):
+		for trainCount in range(3):
 			print frameCount, trainCount
 			perturb, diffVal = CalculateOffsetEffect(combinedModel, vals, im, shapefree, pixelSubset)
 			perturbs.append(perturb)

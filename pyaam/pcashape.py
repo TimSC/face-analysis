@@ -3,19 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.spatial as spatial
 from PIL import Image
-import math
-
-def GetBilinearPixel(im, imload, pos):
-	modX, modY = map(math.modf, pos)
-	bl = np.array(imload[modX[1], modY[1]])
-	br = np.array(imload[modX[1]+1, modY[1]])
-	tl = np.array(imload[modX[1], modY[1]+1])
-	tr = np.array(imload[modX[1]+1, modY[1]+1])
-	
-	b = modX[0] * br + (1. - modX[0]) * bl
-	t = modX[0] * tr + (1. - modX[0]) * tl
-
-	return modY[0] * t + (1. - modY[0]) * b
+import math, warp
 
 class ShapeModel:
 	def __init__(self, meanShape, eigenShapes, variances):
@@ -86,27 +74,7 @@ class ShapeModel:
 		#Synthesis shape norm image		
 		synth = Image.new("RGB",self.sizeImage)
 		synthl = synth.load()
-		for i in range(synth.size[0]):
-			for j in range(synth.size[1]):
-				normSpaceCoord = (float(i)/synth.size[0],float(j)/synth.size[1])
-				tri = self.inTriangle[i,j]
-				if tri == -1: continue
-				affine = triAffines[tri]
-				
-				#Calculate position in the input image
-				homogCoord = (normSpaceCoord[0], normSpaceCoord[1], 1.)
-				inImgCoord = np.dot(affine, homogCoord)
-
-				try:
-					#Nearest neighbour
-					#synthl[i,j] = iml[int(round(inImgCoord[0])),int(round(inImgCoord[1]))]
-
-					#Bilinear sampling
-					#print i,j,inImgCoord[0:2],im.size
-					synthl[i,j] = tuple(map(int,np.round(GetBilinearPixel(im, iml, inImgCoord[0:2]))))
-					#print synthl[i,j]
-				except IndexError:
-					pass
+		warp.Warp(im, iml, synth, synthl, self.inTriangle, triAffines)
 
 		#synth.show()
 
