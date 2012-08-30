@@ -72,9 +72,10 @@ class ShapeModel:
 			triAffines.append(affine)
 
 		#Synthesis shape norm image		
-		synth = Image.new("RGB",self.sizeImage)
-		synthl = synth.load()
-		warp.Warp(im, iml, synth, synthl, self.inTriangle, triAffines)
+		synthArr = np.empty((self.sizeImage[1], self.sizeImage[0], len(im.mode)), dtype=np.uint8)
+		warp.Warp(im, iml, synthArr, self.inTriangle, triAffines)
+
+		synth = Image.fromarray(synthArr)
 
 		#synth.show()
 
@@ -94,6 +95,7 @@ class ShapeModel:
 
 		targetIml = targetIm.load()
 		faceIml = faceIm.load()
+		faceArr = np.asarray(faceIm)
 		shape = np.array(shape)
 
 		#Split input shape into mesh
@@ -133,7 +135,7 @@ class ShapeModel:
 				shapeFreeImgCoord = ((normImgCoord[0])*faceIm.size[0], (normImgCoord[1])*faceIm.size[1])
 
 				try:
-					targetIml[i,j] = tuple(map(int,np.round(GetBilinearPixel(faceIm, faceIml, shapeFreeImgCoord))))
+					targetIml[i,j] = tuple(map(int,np.round(warp.GetBilinearPixelSlow(faceArr, shapeFreeImgCoord))))
 				except IndexError as ex:
 					pass
 
