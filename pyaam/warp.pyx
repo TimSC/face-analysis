@@ -1,7 +1,7 @@
 ### cython: profile=False
-### cython: cdivision=True
-### cython: boundscheck=False
-### cython: wraparound=False
+# cython: cdivision=True
+# cython: boundscheck=False
+# cython: wraparound=False
 
 from PIL import Image
 import numpy as np
@@ -62,17 +62,19 @@ def Warp(inImg, inImgL, np.ndarray[np.uint8_t, ndim=3] outArr, np.ndarray[np.int
 			homogCoord[0] = ifl/widthf
 			homogCoord[1] = jfl/heightf
 			tri = inTriangle[i,j]
-			if tri == -1: continue
+			if tri == -1: 
+				for chan in range(px.shape[0]): outArr[j,i,chan] = 0
+				continue
 			affine = triAffines[tri]
 				
 			#Calculate position in the input image
 			outImgCoord = np.dot(affine, homogCoord)
 
 			if outImgCoord[0] < 0 or outImgCoord[0] >= inArr.shape[1]:
-				for chan in range(px.shape[0]): px[chan] = 0
+				for chan in range(px.shape[0]): outArr[j,i,chan] = 0
 				continue
 			if outImgCoord[1] < 0 or outImgCoord[1] >= inArr.shape[0]:
-				for chan in range(px.shape[0]): px[chan] = 0
+				for chan in range(px.shape[0]): outArr[j,i,chan] = 0
 				continue
 
 			#Nearest neighbour
@@ -88,6 +90,10 @@ def Warp(inImg, inImgL, np.ndarray[np.uint8_t, ndim=3] outArr, np.ndarray[np.int
 	return None
 
 def Warp2(faceIm, faceArr, np.ndarray[np.uint8_t, ndim=3] outArr, np.ndarray[np.int_t, ndim=2] inTessTriangle, triAffines, shape):
+
+	cdef int i, j, height, width, tri, chan
+	cdef np.ndarray[np.int32_t, ndim=1] px = np.empty((len(faceIm.mode),), dtype=np.int32)
+
 	#Calculate ROI in target image
 	xmin, xmax = shape[:,0].min(), shape[:,0].max()
 	ymin, ymax = shape[:,1].min(), shape[:,1].max()
@@ -99,7 +105,9 @@ def Warp2(faceIm, faceArr, np.ndarray[np.uint8_t, ndim=3] outArr, np.ndarray[np.
 			if i < 0 or i >= outArr.shape[1]: continue
 			if j < 0 or j >= outArr.shape[0]: continue
 			simp = inTessTriangle[i, j]
-			if simp == -1: continue
+			if simp == -1: 
+				for chan in range(px.shape[0]): outArr[j,i,chan] = 0
+				continue
 			affine = triAffines[simp]
 
 			#Calculate position in the input image
@@ -109,11 +117,16 @@ def Warp2(faceIm, faceArr, np.ndarray[np.uint8_t, ndim=3] outArr, np.ndarray[np.
 			#Scale normalised coordinate by image size
 			shapeFreeImgCoord = ((normImgCoord[0])*faceIm.size[0], (normImgCoord[1])*faceIm.size[1])
 
-			try:
-				px = map(int,np.round(GetBilinearPixelSlow(faceArr, shapeFreeImgCoord)))
-				outArr[j,i,0] = px[0]
-				outArr[j,i,1] = px[1]
-				outArr[j,i,2] = px[2]
-			except IndexError as ex:
-				pass
+			#Check the source pixel is valid
+			if shapeFreeImgCoord[0] < 0 or shapeFreeImgCoord[0] >= faceArr.shape[1]:
+				for chan in range(px.shape[0]): outArr[j,i,chan] = 0
+				continue
+			if shapeFreeImgCoord[1] < 0 or shapeFreeImgCoord[1] >= faceArr.shape[0]:
+				for chan in range(px.shape[0]): outArr[j,i,chan] = 0
+				continue
+
+			#Copy sampled pixel from source to destination
+			GetBilinearPixel(faceArr, shapeFreeImgCoord[0], shapeFreeImgCoord[1], px)
+			for chan in range(px.shape[0]):
+				outArr[j,i,chan] = px[chan]
 
