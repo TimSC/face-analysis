@@ -101,6 +101,21 @@ class ShapeModel:
 		#Split input shape into mesh
 		tess = spatial.Delaunay(shape)
 
+		#Calculate ROI in target image
+		xmin, xmax = shape[:,0].min(), shape[:,0].max()
+		ymin, ymax = shape[:,1].min(), shape[:,1].max()
+		#print xmin, xmax, ymin, ymax
+
+		#Determine which tesselation triangle contains each pixel in the shape norm image
+		inTessTriangle = np.ones(targetIm.size, dtype=np.int) * -1
+		for i in range(int(xmin), int(xmax+1.)):
+			for j in range(int(ymin), int(ymax+1.)):
+				if i < 0 or i >= inTessTriangle.shape[0]: continue
+				if j < 0 or j >= inTessTriangle.shape[1]: continue
+				normSpaceCoord = (float(i),float(j))
+				simp = tess.find_simplex([normSpaceCoord])
+				inTessTriangle[i,j] = simp
+
 		#Find affine mapping from input positions to mean shape
 		triAffines = []
 		for i, tri in enumerate(tess.vertices):
@@ -111,11 +126,6 @@ class ShapeModel:
 			affine = np.dot(meanVertPos, np.linalg.inv(shapeVertPos)) 
 			triAffines.append(affine)
 
-		#Calculate ROI in target image
-		xmin, xmax = shape[:,0].min(), shape[:,0].max()
-		ymin, ymax = shape[:,1].min(), shape[:,1].max()
-		#print xmin, xmax, ymin, ymax
-
 		#Calculate pixel colours
 		for i in range(int(xmin), int(xmax+1)):
 			for j in range(int(ymin), int(ymax+1)):
@@ -124,7 +134,9 @@ class ShapeModel:
 				#normSpaceCoordY = (j - ymin) / (ymax - ymin)
 
 				#Determine which tesselation triangle contains each pixel in the shape norm image
-				simp = tess.find_simplex([i, j])
+				if i < 0 or i >= targetIm.size[0]: continue
+				if j < 0 or j >= targetIm.size[1]: continue
+				simp = inTessTriangle[i, j]
 				if simp == -1: continue
 				affine = triAffines[simp]
 
