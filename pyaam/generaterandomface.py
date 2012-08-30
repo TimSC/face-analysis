@@ -5,8 +5,8 @@ if __name__ == "__main__":
 	combModel = pickle.load(open("combinedmodel.dat","rb"))
 
 	numEigenVals = int(round(combModel.eigenVec.shape[0] * 0.1))
-	#extendedVals = np.concatenate(([0.,0.,200.,0.],np.random.rand((numEigenVals)) * 4. - 2.))
-	extendedVals = np.array([200.,200.,400.,0.])
+	extendedVals = np.concatenate(([200.,160.,400.,0.],np.random.rand((numEigenVals)) * 4. - 2.))
+	#extendedVals = np.array([200.,150.,400.,0.])
 
 	im = combModel.GenerateFace(extendedVals)
 
