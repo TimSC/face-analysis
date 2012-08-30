@@ -127,30 +127,9 @@ class ShapeModel:
 			triAffines.append(affine)
 
 		#Calculate pixel colours
-		for i in range(int(xmin), int(xmax+1)):
-			for j in range(int(ymin), int(ymax+1)):
-
-				#normSpaceCoordX = (i - xmin) / (xmax - xmin)
-				#normSpaceCoordY = (j - ymin) / (ymax - ymin)
-
-				#Determine which tesselation triangle contains each pixel in the shape norm image
-				if i < 0 or i >= targetIm.size[0]: continue
-				if j < 0 or j >= targetIm.size[1]: continue
-				simp = inTessTriangle[i, j]
-				if simp == -1: continue
-				affine = triAffines[simp]
-
-				#Calculate position in the input image
-				homogCoord = (i, j, 1.)
-				normImgCoord = np.dot(affine, homogCoord)
-
-				#Scale normalised coordinate by image size
-				shapeFreeImgCoord = ((normImgCoord[0])*faceIm.size[0], (normImgCoord[1])*faceIm.size[1])
-
-				try:
-					targetIml[i,j] = tuple(map(int,np.round(warp.GetBilinearPixelSlow(faceArr, shapeFreeImgCoord))))
-				except IndexError as ex:
-					pass
+		targetArr = np.copy(np.asarray(targetIm, dtype=np.uint8))
+		warp.Warp2(faceIm, faceArr, targetArr, inTessTriangle, triAffines, shape)
+		targetIm.paste(Image.fromarray(targetArr))
 
 		#Plot key points on target image
 		#for pt in shape:
