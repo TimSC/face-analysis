@@ -1,7 +1,7 @@
 ### cython: profile=False
-# cython: cdivision=True
-# cython: boundscheck=False
-# cython: wraparound=False
+### cython: cdivision=True
+### cython: boundscheck=False
+### cython: wraparound=False
 
 from PIL import Image
 import numpy as np
@@ -86,3 +86,34 @@ def Warp(inImg, inImgL, np.ndarray[np.uint8_t, ndim=3] outArr, np.ndarray[np.int
 			#print outImgL[i,j]
 
 	return None
+
+def Warp2(faceIm, faceArr, np.ndarray[np.uint8_t, ndim=3] outArr, np.ndarray[np.int_t, ndim=2] inTessTriangle, triAffines, shape):
+	#Calculate ROI in target image
+	xmin, xmax = shape[:,0].min(), shape[:,0].max()
+	ymin, ymax = shape[:,1].min(), shape[:,1].max()
+
+	for i in range(int(xmin), int(xmax+1)):
+		for j in range(int(ymin), int(ymax+1)):
+
+			#Determine which tesselation triangle contains each pixel in the shape norm image
+			if i < 0 or i >= outArr.shape[1]: continue
+			if j < 0 or j >= outArr.shape[0]: continue
+			simp = inTessTriangle[i, j]
+			if simp == -1: continue
+			affine = triAffines[simp]
+
+			#Calculate position in the input image
+			homogCoord = (i, j, 1.)
+			normImgCoord = np.dot(affine, homogCoord)
+
+			#Scale normalised coordinate by image size
+			shapeFreeImgCoord = ((normImgCoord[0])*faceIm.size[0], (normImgCoord[1])*faceIm.size[1])
+
+			try:
+				px = map(int,np.round(GetBilinearPixelSlow(faceArr, shapeFreeImgCoord)))
+				outArr[j,i,0] = px[0]
+				outArr[j,i,1] = px[1]
+				outArr[j,i,2] = px[2]
+			except IndexError as ex:
+				pass
+
