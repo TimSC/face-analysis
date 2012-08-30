@@ -4,8 +4,13 @@ import pickle, pcacombined
 if __name__ == "__main__":
 	combModel = pickle.load(open("combinedmodel.dat","rb"))
 
-	numEigenVals = int(combModel.eigenVec.shape[0] * 0.1)
-	im = combModel.GenerateFace(np.random.rand((numEigenVals)) * 4. - 2.)
+	numEigenVals = int(round(combModel.eigenVec.shape[0] * 0.1))
+	#extendedVals = np.concatenate(([0.,0.,200.,0.],np.random.rand((numEigenVals)) * 4. - 2.))
+	extendedVals = np.array([200.,200.,400.,0.])
+
+	im = combModel.GenerateFace(extendedVals)
+
+	im.show()
 
 	print "Saving as randomface.png"
 	im.save("randomface.png")

@@ -23,13 +23,8 @@ class CombinedModel:
 
 		targetIm = Image.new("RGB", shapeFreeImg.size)
 
-		#Scale coordinates to keep the output image the same as the shape free image
-		scaleShapeToImg = []
-		for pt in shape:
-			scaleShapeToImg.append(((pt[0]) * shapeFreeImg.size[0], (pt[1]) * shapeFreeImg.size[1]))
-
 		#Transform the shape free image and paste into the target image
-		self.shapeModel.CopyShapeFreeFaceToImg(targetIm, shapeFreeImg, scaleShapeToImg)
+		self.shapeModel.CopyShapeFreeFaceToImg(targetIm, shapeFreeImg, shape)
 
 		return targetIm
 
@@ -113,7 +108,7 @@ class CombinedModel:
 		#Transform shape based on procrustes parameters
 		#Zero centre
 		synthShapeCent = synthShape - synthShape.mean(axis=0)
-		
+
 		#Scale shape
 		scaledShape = synthShapeCent * procParams[2]
 

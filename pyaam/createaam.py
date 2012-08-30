@@ -68,7 +68,7 @@ if __name__ == "__main__":
 		for i in range(shapefree.size[0]):
 			for j in range(shapefree.size[1]):
 				pixList.append((i,j))
-		pixelSubset = random.sample(pixList, 200)
+		pixelSubset = random.sample(pixList, 1000)
 
 		for trainCount in range(100):
 			print frameCount, trainCount

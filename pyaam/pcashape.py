@@ -95,7 +95,7 @@ class ShapeModel:
 
 		targetIml = targetIm.load()
 		faceIml = faceIm.load()
-		faceArr = np.asarray(faceIm)
+		faceArr = np.asarray(faceIm, dtype=np.float32)
 		shape = np.array(shape)
 
 		#Split input shape into mesh
@@ -114,6 +114,7 @@ class ShapeModel:
 		#Calculate ROI in target image
 		xmin, xmax = shape[:,0].min(), shape[:,0].max()
 		ymin, ymax = shape[:,1].min(), shape[:,1].max()
+		#print xmin, xmax, ymin, ymax
 
 		#Calculate pixel colours
 		for i in range(int(xmin), int(xmax+1)):
