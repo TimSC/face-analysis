@@ -40,11 +40,11 @@ def GetBilinearPixelSlow(inArr, pos):
 	GetBilinearPixel(inArr, pos[0], pos[1], out)
 	return out
 
-def Warp(inImg, inImgL, np.ndarray[np.uint8_t, ndim=3] outArr, np.ndarray[np.int_t, ndim=2] inTriangle, triAffines):
+def Warp(inImg, inArr, np.ndarray[np.uint8_t, ndim=3] outArr, np.ndarray[np.int_t, ndim=2] inTriangle, triAffines, shape):
 	cdef int i, j, height, width, tri, chan
 	cdef float ifl, jfl, heightf, widthf, normSpaceCoordX, normSpaceCoordY
 
-	cdef np.ndarray[np.float32_t, ndim=3] inArr = np.asarray(inImg, dtype=np.float32)
+	#cdef np.ndarray[np.float32_t, ndim=3] inArr = np.asarray(inImg, dtype=np.float32)
 	cdef np.ndarray[np.int32_t, ndim=1] px = np.empty((inArr.shape[2],), dtype=np.int32)
 	cdef np.ndarray[np.float32_t, ndim=1] homogCoord = np.ones((3,), dtype=np.float32)
 	cdef np.ndarray[double, ndim=1] outImgCoord
@@ -53,6 +53,11 @@ def Warp(inImg, inImgL, np.ndarray[np.uint8_t, ndim=3] outArr, np.ndarray[np.int
 	height = outArr.shape[0]
 	heightf = height
 	widthf = width
+
+	#Calculate ROI in target image
+	xmin, xmax = shape[:,0].min(), shape[:,0].max()
+	ymin, ymax = shape[:,1].min(), shape[:,1].max()
+	#print xmin, xmax, ymin, ymax
 
 	#Synthesis shape norm image		
 	for i in range(width):

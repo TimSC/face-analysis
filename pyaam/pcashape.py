@@ -60,7 +60,6 @@ class ShapeModel:
 
 		if self.inTriangle is None: self.CalcTesselation()
 		pos = np.array(pos)
-		iml = im.load()
 	
 		#Find affine mapping from mean shape to input positions
 		triAffines = []
@@ -72,8 +71,9 @@ class ShapeModel:
 			triAffines.append(affine)
 
 		#Synthesis shape norm image		
-		synthArr = np.empty((self.sizeImage[1], self.sizeImage[0], len(im.mode)), dtype=np.uint8)
-		warp.Warp(im, iml, synthArr, self.inTriangle, triAffines)
+		imArr = np.asarray(im, dtype=np.float32)
+		synthArr = np.zeros((self.sizeImage[1], self.sizeImage[0], len(im.mode)), dtype=np.uint8)
+		warp.Warp(im, imArr, synthArr, self.inTriangle, triAffines, self.meanShape)
 
 		synth = Image.fromarray(synthArr)
 
