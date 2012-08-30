@@ -39,9 +39,14 @@ def GetBilinearPixelSlow(inArr, pos):
 	GetBilinearPixel(inArr, pos[0], pos[1], out)
 	return out
 
-def Warp(inImg, inArr, np.ndarray[np.uint8_t, ndim=3] outArr, np.ndarray[np.int_t, ndim=2] inTriangle, triAffines, shape):
-	cdef int i, j, height, width, tri, chan
+def Warp(inImg, np.ndarray[np.float32_t, ndim=3] inArr, 
+	np.ndarray[np.uint8_t, ndim=3] outArr, 
+	np.ndarray[np.int_t, ndim=2] inTriangle, 
+	triAffines, shape):
+
+	cdef int i, j, tri, chan
 	cdef float xmin, xmax, ymin, ymax
+	cdef int xmini, xmaxi, ymini, ymaxi
 	cdef float normSpaceCoordX, normSpaceCoordY
 
 	#cdef np.ndarray[np.float32_t, ndim=3] inArr = np.asarray(inImg, dtype=np.float32)
@@ -49,17 +54,21 @@ def Warp(inImg, inArr, np.ndarray[np.uint8_t, ndim=3] outArr, np.ndarray[np.int_
 	cdef np.ndarray[np.float32_t, ndim=1] homogCoord = np.ones((3,), dtype=np.float32)
 	cdef np.ndarray[double, ndim=1] outImgCoord
 	cdef np.ndarray[double, ndim=2] affine
-	width = outArr.shape[1]
-	height = outArr.shape[0]
 
 	#Calculate ROI in target image
-	xmin, xmax = shape[:,0].min(), shape[:,0].max()
-	ymin, ymax = shape[:,1].min(), shape[:,1].max()
+	xmin = shape[:,0].min()
+	xmax = shape[:,0].max()
+	ymin = shape[:,1].min()
+	ymax = shape[:,1].max()
+	xmini = int(xmin)
+	xmaxi = int(xmax+1.)
+	ymini = int(ymin)
+	ymaxi = int(ymax+1.)
 	#print xmin, xmax, ymin, ymax
 
 	#Synthesis shape norm image		
-	for i in range(int(xmin), int(xmax+1)):
-		for j in range(int(ymin), int(ymax+1)):
+	for i in range(xmini, xmaxi):
+		for j in range(ymini, ymaxi):
 			homogCoord[0] = i
 			homogCoord[1] = j
 
@@ -76,6 +85,7 @@ def Warp(inImg, inArr, np.ndarray[np.uint8_t, ndim=3] outArr, np.ndarray[np.int_
 			affine = triAffines[tri]
 			outImgCoord = np.dot(affine, homogCoord)
 
+			#Check destination pixel is within the image
 			if outImgCoord[0] < 0 or outImgCoord[0] >= inArr.shape[1]:
 				for chan in range(px.shape[0]): outArr[j,i,chan] = 0
 				continue
@@ -86,7 +96,7 @@ def Warp(inImg, inArr, np.ndarray[np.uint8_t, ndim=3] outArr, np.ndarray[np.int_
 			#Nearest neighbour
 			#outImgL[i,j] = inImgL[int(round(inImgCoord[0])),int(round(inImgCoord[1]))]
 
-			#Bilinear sampling
+			#Copy pixel from source to destination by bilinear sampling
 			#print i,j,outImgCoord[0:2],im.size
 			GetBilinearPixel(inArr, outImgCoord[0], outImgCoord[1], px)
 			for chan in range(px.shape[0]):
