@@ -34,7 +34,6 @@ cdef GetBilinearPixel(np.ndarray[np.float32_t,ndim=3] imArr, float posX, float p
 
 	return None #Helps with profiling view
 
-
 def GetBilinearPixelSlow(inArr, pos):
 	cdef np.ndarray[np.int32_t,ndim=1] out = np.empty((inArr.shape[2],), dtype=np.int32)
 	GetBilinearPixel(inArr, pos[0], pos[1], out)
@@ -42,7 +41,8 @@ def GetBilinearPixelSlow(inArr, pos):
 
 def Warp(inImg, inArr, np.ndarray[np.uint8_t, ndim=3] outArr, np.ndarray[np.int_t, ndim=2] inTriangle, triAffines, shape):
 	cdef int i, j, height, width, tri, chan
-	cdef float ifl, jfl, heightf, widthf, normSpaceCoordX, normSpaceCoordY
+	cdef float xmin, xmax, ymin, ymax
+	cdef float normSpaceCoordX, normSpaceCoordY
 
 	#cdef np.ndarray[np.float32_t, ndim=3] inArr = np.asarray(inImg, dtype=np.float32)
 	cdef np.ndarray[np.int32_t, ndim=1] px = np.empty((inArr.shape[2],), dtype=np.int32)
@@ -51,8 +51,6 @@ def Warp(inImg, inArr, np.ndarray[np.uint8_t, ndim=3] outArr, np.ndarray[np.int_
 	cdef np.ndarray[double, ndim=2] affine
 	width = outArr.shape[1]
 	height = outArr.shape[0]
-	heightf = height
-	widthf = width
 
 	#Calculate ROI in target image
 	xmin, xmax = shape[:,0].min(), shape[:,0].max()
@@ -60,19 +58,22 @@ def Warp(inImg, inArr, np.ndarray[np.uint8_t, ndim=3] outArr, np.ndarray[np.int_
 	#print xmin, xmax, ymin, ymax
 
 	#Synthesis shape norm image		
-	for i in range(width):
-		for j in range(height):
-			ifl = i
-			jfl = j
-			homogCoord[0] = ifl/widthf
-			homogCoord[1] = jfl/heightf
+	for i in range(int(xmin), int(xmax+1)):
+		for j in range(int(ymin), int(ymax+1)):
+			homogCoord[0] = i
+			homogCoord[1] = j
+
+			#Determine which tesselation triangle contains each pixel in the shape norm image
+			if i < 0 or i >= outArr.shape[1]: continue
+			if j < 0 or j >= outArr.shape[0]: continue
+
+			#Determine which triangle the destination pixel occupies
 			tri = inTriangle[i,j]
 			if tri == -1: 
-				for chan in range(px.shape[0]): outArr[j,i,chan] = 0
 				continue
-			affine = triAffines[tri]
 				
 			#Calculate position in the input image
+			affine = triAffines[tri]
 			outImgCoord = np.dot(affine, homogCoord)
 
 			if outImgCoord[0] < 0 or outImgCoord[0] >= inArr.shape[1]:
@@ -93,46 +94,4 @@ def Warp(inImg, inArr, np.ndarray[np.uint8_t, ndim=3] outArr, np.ndarray[np.int_
 			#print outImgL[i,j]
 
 	return None
-
-def Warp2(faceIm, faceArr, np.ndarray[np.uint8_t, ndim=3] outArr, np.ndarray[np.int_t, ndim=2] inTessTriangle, triAffines, shape):
-
-	cdef int i, j, height, width, tri, chan
-	cdef np.ndarray[np.int32_t, ndim=1] px = np.empty((len(faceIm.mode),), dtype=np.int32)
-
-	#Calculate ROI in target image
-	xmin, xmax = shape[:,0].min(), shape[:,0].max()
-	ymin, ymax = shape[:,1].min(), shape[:,1].max()
-
-	for i in range(int(xmin), int(xmax+1)):
-		for j in range(int(ymin), int(ymax+1)):
-
-			#Determine which tesselation triangle contains each pixel in the shape norm image
-			if i < 0 or i >= outArr.shape[1]: continue
-			if j < 0 or j >= outArr.shape[0]: continue
-			simp = inTessTriangle[i, j]
-			if simp == -1: 
-				for chan in range(px.shape[0]): outArr[j,i,chan] = 0
-				continue
-			affine = triAffines[simp]
-
-			#Calculate position in the input image
-			homogCoord = (i, j, 1.)
-			normImgCoord = np.dot(affine, homogCoord)
-
-			#Scale normalised coordinate by image size
-			#shapeFreeImgCoord = ((normImgCoord[0])*faceIm.size[0], (normImgCoord[1])*faceIm.size[1])
-			shapeFreeImgCoord = normImgCoord
-
-			#Check the source pixel is valid
-			if shapeFreeImgCoord[0] < 0 or shapeFreeImgCoord[0] >= faceArr.shape[1]:
-				for chan in range(px.shape[0]): outArr[j,i,chan] = 0
-				continue
-			if shapeFreeImgCoord[1] < 0 or shapeFreeImgCoord[1] >= faceArr.shape[0]:
-				for chan in range(px.shape[0]): outArr[j,i,chan] = 0
-				continue
-
-			#Copy sampled pixel from source to destination
-			GetBilinearPixel(faceArr, shapeFreeImgCoord[0], shapeFreeImgCoord[1], px)
-			for chan in range(px.shape[0]):
-				outArr[j,i,chan] = px[chan]
 

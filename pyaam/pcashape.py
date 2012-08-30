@@ -63,8 +63,10 @@ class ShapeModel:
 	
 		#Find affine mapping from mean shape to input positions
 		triAffines = []
+		scaledShape = self.meanShape * self.sizeImage[0]
+
 		for i, tri in enumerate(self.vertices):
-			meanVertPos = np.hstack((self.meanShape[tri], np.ones((3,1)))).transpose()
+			meanVertPos = np.hstack((scaledShape[tri], np.ones((3,1)))).transpose()
 			inputVertPos = np.hstack((pos[tri,:], np.ones((3,1)))).transpose()
 			affine = np.dot(inputVertPos, np.linalg.inv(meanVertPos)) 
 			#print i, meanVertPos, np.dot(affine, meanVertPos)#, affine
@@ -73,7 +75,7 @@ class ShapeModel:
 		#Synthesis shape norm image		
 		imArr = np.asarray(im, dtype=np.float32)
 		synthArr = np.zeros((self.sizeImage[1], self.sizeImage[0], len(im.mode)), dtype=np.uint8)
-		warp.Warp(im, imArr, synthArr, self.inTriangle, triAffines, self.meanShape)
+		warp.Warp(im, imArr, synthArr, self.inTriangle, triAffines, scaledShape)
 
 		synth = Image.fromarray(synthArr)
 
@@ -128,7 +130,7 @@ class ShapeModel:
 
 		#Calculate pixel colours
 		targetArr = np.copy(np.asarray(targetIm, dtype=np.uint8))
-		warp.Warp2(faceIm, faceArr, targetArr, inTessTriangle, triAffines, shape)
+		warp.Warp(faceIm, faceArr, targetArr, inTessTriangle, triAffines, shape)
 		targetIm.paste(Image.fromarray(targetArr))
 
 		#Plot key points on target image
