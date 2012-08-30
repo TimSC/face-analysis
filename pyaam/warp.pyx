@@ -120,7 +120,8 @@ def Warp2(faceIm, faceArr, np.ndarray[np.uint8_t, ndim=3] outArr, np.ndarray[np.
 			normImgCoord = np.dot(affine, homogCoord)
 
 			#Scale normalised coordinate by image size
-			shapeFreeImgCoord = ((normImgCoord[0])*faceIm.size[0], (normImgCoord[1])*faceIm.size[1])
+			#shapeFreeImgCoord = ((normImgCoord[0])*faceIm.size[0], (normImgCoord[1])*faceIm.size[1])
+			shapeFreeImgCoord = normImgCoord
 
 			#Check the source pixel is valid
 			if shapeFreeImgCoord[0] < 0 or shapeFreeImgCoord[0] >= faceArr.shape[1]:

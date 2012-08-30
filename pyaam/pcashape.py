@@ -119,7 +119,7 @@ class ShapeModel:
 		#Find affine mapping from input positions to mean shape
 		triAffines = []
 		for i, tri in enumerate(tess.vertices):
-			meanVertPos = np.hstack((self.meanShape[tri], np.ones((3,1)))).transpose()
+			meanVertPos = np.hstack((self.meanShape[tri] * faceIm.size[0], np.ones((3,1)))).transpose()
 			shapeVertPos = np.hstack((shape[tri,:], np.ones((3,1)))).transpose()
 			#print meanVertPos
 			#print shapeVertPos
