@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.spatial as spatial
 from PIL import Image
-import math, warp
+import math, warpcython
 
 class ShapeModel:
 	def __init__(self, meanShape, eigenShapes, variances):
@@ -75,7 +75,7 @@ class ShapeModel:
 		#Synthesis shape norm image		
 		imArr = np.asarray(im, dtype=np.float32)
 		synthArr = np.zeros((self.sizeImage[1], self.sizeImage[0], len(im.mode)), dtype=np.uint8)
-		warp.Warp(im, imArr, synthArr, self.inTriangle, triAffines, scaledShape)
+		warpcython.WarpProcessing(im, imArr, synthArr, self.inTriangle, triAffines, scaledShape)
 
 		synth = Image.fromarray(synthArr)
 
@@ -130,7 +130,7 @@ class ShapeModel:
 
 		#Calculate pixel colours
 		targetArr = np.copy(np.asarray(targetIm, dtype=np.uint8))
-		warp.Warp(faceIm, faceArr, targetArr, inTessTriangle, triAffines, shape)
+		warpcython.WarpProcessing(faceIm, faceArr, targetArr, inTessTriangle, triAffines, shape)
 		targetIm.paste(Image.fromarray(targetArr))
 
 		#Plot key points on target image

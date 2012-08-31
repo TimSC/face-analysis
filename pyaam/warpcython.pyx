@@ -7,6 +7,7 @@ from PIL import Image
 import numpy as np
 cimport numpy as np
 import math
+import scipy.spatial as spatial
 
 cdef GetBilinearPixel(np.ndarray[np.float32_t,ndim=3] imArr, float posX, float posY, np.ndarray[np.int32_t,ndim=1] out):
 	cdef float modXf, modYf
@@ -34,12 +35,7 @@ cdef GetBilinearPixel(np.ndarray[np.float32_t,ndim=3] imArr, float posX, float p
 
 	return None #Helps with profiling view
 
-def GetBilinearPixelSlow(inArr, pos):
-	cdef np.ndarray[np.int32_t,ndim=1] out = np.empty((inArr.shape[2],), dtype=np.int32)
-	GetBilinearPixel(inArr, pos[0], pos[1], out)
-	return out
-
-def Warp(inImg, np.ndarray[np.float32_t, ndim=3] inArr, 
+def WarpProcessing(inImg, np.ndarray[np.float32_t, ndim=3] inArr, 
 	np.ndarray[np.uint8_t, ndim=3] outArr, 
 	np.ndarray[np.int_t, ndim=2] inTriangle, 
 	triAffines, shape):
@@ -104,4 +100,51 @@ def Warp(inImg, np.ndarray[np.float32_t, ndim=3] inArr,
 			#print outImgL[i,j]
 
 	return None
+
+def PiecewiseAffineTransform(srcIm, srcPoints, dstIm, dstPoints):
+
+	#Convert input to correct types
+	srcArr = np.asarray(srcIm, dtype=np.float32)
+	dstPoints = np.array(dstPoints)
+	srcPoints = np.array(srcPoints)
+
+	#Split input shape into mesh
+	tess = spatial.Delaunay(dstPoints)
+
+	#Calculate ROI in target image
+	xmin, xmax = dstPoints[:,0].min(), dstPoints[:,0].max()
+	ymin, ymax = dstPoints[:,1].min(), dstPoints[:,1].max()
+	#print xmin, xmax, ymin, ymax
+
+	#Determine which tesselation triangle contains each pixel in the shape norm image
+	inTessTriangle = np.ones(dstIm.size, dtype=np.int) * -1
+	for i in range(int(xmin), int(xmax+1.)):
+		for j in range(int(ymin), int(ymax+1.)):
+			if i < 0 or i >= inTessTriangle.shape[0]: continue
+			if j < 0 or j >= inTessTriangle.shape[1]: continue
+			normSpaceCoord = (float(i),float(j))
+			simp = tess.find_simplex([normSpaceCoord])
+			inTessTriangle[i,j] = simp
+
+	#Find affine mapping from input positions to mean shape
+	triAffines = []
+	for i, tri in enumerate(tess.vertices):
+		meanVertPos = np.hstack((srcPoints[tri], np.ones((3,1)))).transpose()
+		shapeVertPos = np.hstack((dstPoints[tri,:], np.ones((3,1)))).transpose()
+
+		affine = np.dot(meanVertPos, np.linalg.inv(shapeVertPos)) 
+		triAffines.append(affine)
+
+	#Prepare arrays, check they are 3D	
+	targetArr = np.copy(np.asarray(dstIm, dtype=np.uint8))
+	srcArr = srcArr.reshape(srcArr.shape[0], srcArr.shape[1], len(srcIm.mode))
+	targetArr = targetArr.reshape(targetArr.shape[0], targetArr.shape[1], len(dstIm.mode))
+
+	#Calculate pixel colours
+	WarpProcessing(srcIm, srcArr, targetArr, inTessTriangle, triAffines, dstPoints)
+	
+	#Convert single channel images to 2D
+	if targetArr.shape[2] == 1:
+		targetArr = targetArr.reshape((targetArr.shape[0],targetArr.shape[1]))
+	dstIm.paste(Image.fromarray(targetArr))
 
