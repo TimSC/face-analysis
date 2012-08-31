@@ -1,7 +1,9 @@
+#!/usr/bin/env python
 import pickle, picseqloader, pcacombined, random
 from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
+from optparse import OptionParser
 
 def CalculateOffsetEffect(combinedModel, vals, im, shapefree, pixelSubset):
 
@@ -48,6 +50,21 @@ def CalculateOffsetEffect(combinedModel, vals, im, shapefree, pixelSubset):
 	return perturb, diffVals
 
 if __name__ == "__main__":
+
+	perturboutFiNa = "perturbs.dat"
+	diffoutFiNa = "diffVals.dat"
+
+	#Process command line args
+	parser = OptionParser()
+	parser.add_option("-d", "--diffout", dest="diffout",
+				          help="Output intensity difference data to filename")
+	parser.add_option("-p", "--perturbout", dest="perturbout",
+				          help="Output perturbation distance data to filename")
+	(options, args) = parser.parse_args()
+	if options.diffout is not None: diffoutFiNa = options.diffout
+	if options.perturbout is not None: perturboutFiNa = options.perturbout
+
+	#Load combined model, annotations and images
 	combinedModel = pickle.load(open("combinedmodel.dat","rb"))
 	(pics, posData) = picseqloader.LoadTimDatabase()
 
@@ -76,12 +93,12 @@ if __name__ == "__main__":
 			perturbs.append(perturb)
 			diffVals.append(diffVal)
 	
-	pickle.dump(perturbs, open("perturbs.dat","wb"), protocol =  pickle.HIGHEST_PROTOCOL)
-	pickle.dump(diffVals, open("diffVals.dat","wb"), protocol =  pickle.HIGHEST_PROTOCOL)
+		pickle.dump(perturbs, open(perturboutFiNa,"wb"), protocol =  pickle.HIGHEST_PROTOCOL)
+		pickle.dump(diffVals, open(diffoutFiNa,"wb"), protocol =  pickle.HIGHEST_PROTOCOL)
 
 	if 1:	
-		perturbs = pickle.load(open("perturbs.dat","rb"))
-		diffVals = pickle.load(open("diffVals.dat","rb"))
+		perturbs = pickle.load(open(perturboutFiNa,"rb"))
+		diffVals = pickle.load(open(diffoutFiNa,"rb"))
 
 		perturbs = np.array(perturbs)
 		diffVals = np.array(diffVals)
