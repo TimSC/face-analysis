@@ -74,7 +74,7 @@ def GenerateTrainingSamples(processNum, numProcesses, posData, pics, combinedMod
 			#Perturb values
 			changedVals = np.copy(vals)
 			perturb = np.zeros(changedVals.shape)	
-			perturb[2] = scaleExample
+			perturb[2] = scaleExample * vals[2] #Scale by current value
 			changedVals = changedVals + perturb
 
 			diffVal = CalculateOffsetEffect(combinedModel, changedVals, im, shapefree, pixelSubset)
