@@ -1,17 +1,18 @@
 #!/usr/bin/env python
-import pickle, picseqloader, pcacombined, random, time
+import pickle, picseqloader, pcacombined, random, time, shelve, os
 from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
 from optparse import OptionParser
 import multiprocessing
 
-def GenerateTrainingSamples(processNum, numProcesses, posData, pics, combinedModel, perturbsOut, diffValsOut):
+def GenerateTrainingSamples(processNum, numProcesses, posData, pics, combinedModel, perturbsOut):
 
 	for frameCount, (framePos, im) in enumerate(zip(posData, pics)):
 		#Distribute frames between the threads
 		if (frameCount + processNum) % numProcesses != 0:
 			continue
+		countExamples = 0
 
 		#Get shape free face
 		shapefree = combinedModel.ImageToNormaliseFace(im, framePos)
@@ -31,6 +32,7 @@ def GenerateTrainingSamples(processNum, numProcesses, posData, pics, combinedMod
 		horizontalRange = max(horizonalSamples) - min(horizonalSamples)
 
 		#The parameters used in this section are taken from
+		#Active Appearance Models: Theory, Extensions and Cases by Mikkel Bille Stegmann, 2000
 		#http://www2.imm.dtu.dk/~aam/main/node16.html
 
 		offsetExamples = [-0.2, -0.1, -0.03, 0.03, 0.1, 0.2]
@@ -45,10 +47,12 @@ def GenerateTrainingSamples(processNum, numProcesses, posData, pics, combinedMod
 			changedVals = changedVals + perturb
 
 			diffVal = CalculateOffsetEffect(combinedModel, changedVals, im, shapefree, pixelSubset)
-			perturbsOut.append(perturb)
-			diffValsOut.append(diffVal)
+			perturbsOut[str(countExamples)] = (perturb, diffVal)
+			countExamples += 1
 
 			time.sleep(0.01)
+
+		perturbsOut.sync()
 
 		#Perturb Y
 		for offsetExample in offsetExamples:
@@ -61,10 +65,12 @@ def GenerateTrainingSamples(processNum, numProcesses, posData, pics, combinedMod
 			changedVals = changedVals + perturb
 
 			diffVal = CalculateOffsetEffect(combinedModel, changedVals, im, shapefree, pixelSubset)
-			perturbsOut.append(perturb)
-			diffValsOut.append(diffVal)
+			perturbsOut[str(countExamples)] = (perturb, diffVal)
+			countExamples += 1
 
 			time.sleep(0.01)
+
+		perturbsOut.sync()
 
 		#Perturb Scale
 		scaleExamples = [0.95, 0.97, 0.99, 1.01, 1.03, 1.05]
@@ -78,10 +84,12 @@ def GenerateTrainingSamples(processNum, numProcesses, posData, pics, combinedMod
 			changedVals = changedVals + perturb
 
 			diffVal = CalculateOffsetEffect(combinedModel, changedVals, im, shapefree, pixelSubset)
-			perturbsOut.append(perturb)
-			diffValsOut.append(diffVal)
+			perturbsOut[str(countExamples)] = (perturb, diffVal)
+			countExamples += 1
 
 			time.sleep(0.01)
+
+		perturbsOut.sync()
 
 		#Perturb rotation
 		rotationExamples = [-5, -3, -1, 1, 3, 5]
@@ -95,17 +103,19 @@ def GenerateTrainingSamples(processNum, numProcesses, posData, pics, combinedMod
 			changedVals = changedVals + perturb
 
 			diffVal = CalculateOffsetEffect(combinedModel, changedVals, im, shapefree, pixelSubset)
-			perturbsOut.append(perturb)
-			diffValsOut.append(diffVal)
+			perturbsOut[str(countExamples)] = (perturb, diffVal)
+			countExamples += 1
 
 			time.sleep(0.01)		
+
+		perturbsOut.sync()
 
 		#Perturb combined model, for each feature
 		perturbExamples = [-0.5, -0.25, 0.25, 0.5]
 		numEigVals = int(round(len(vals) * 0.3))
 		for featNum in range(4, 4+numEigVals):
 			for perturbExample in perturbExamples:
-				print "frame=",frameCount,"of",len(posData),",featNum=",featNum,",process=",processNum, numEigVals
+				print "frame=",frameCount,"of",len(posData),",featNum=",featNum,"of",numEigVals,",process=",processNum
 
 				#Perturb values
 				changedVals = np.copy(vals)
@@ -114,10 +124,11 @@ def GenerateTrainingSamples(processNum, numProcesses, posData, pics, combinedMod
 				changedVals = changedVals + perturb
 
 				diffVal = CalculateOffsetEffect(combinedModel, changedVals, im, shapefree, pixelSubset)
-				perturbsOut.append(perturb)
-				diffValsOut.append(diffVal)
+				perturbsOut[str(countExamples)] = (perturb, diffVal)
+				countExamples += 1
 
 				time.sleep(0.01)	
+			perturbsOut.sync()
 
 	return None
 
@@ -174,40 +185,48 @@ if __name__ == "__main__":
 	combinedModel = pickle.load(open("combinedmodel.dat","rb"))
 	(pics, posData) = picseqloader.LoadTimDatabase()
 
+	#Delete existing output files
 	numProcessors = multiprocessing.cpu_count()
+	for count in range(numProcessors):
+		fina = "perterbs{0}.dat".format(count)
+		if os.path.exists(fina): os.unlink(fina)
+
+	#Generate training data with multiple processors
 	manager = multiprocessing.Manager()
 	processes, perturbsBank, diffValsBank = [], [], []
 	for count in range(numProcessors):
-		perturbsOut = manager.list()
-		diffValsOut = manager.list()
+		perturbsOut = shelve.open("perterbs{0}.dat".format(count), protocol =  pickle.HIGHEST_PROTOCOL)
 		p = multiprocessing.Process(target=GenerateTrainingSamples, args=(count, \
-			numProcessors, posData, pics, combinedModel, perturbsOut, diffValsOut))
+			numProcessors, posData, pics, combinedModel, perturbsOut))
 		p.start()
 		processes.append(p)
 		perturbsBank.append(perturbsOut)
-		diffValsBank.append(diffValsOut)
 
 	for p in processes:
 		p.join()
 
-	#Collect process results into final data structure
-	perturbMerge = []
-	for li in perturbsBank:
-		perturbMerge.extend(li)
+	for per in perturbsBank:
+		print len(per)
 
-	diffValsMerge = []
-	for li in diffValsBank:
-		diffValsMerge.extend(li)
+	if 0:
+		#Collect process results into final data structure
+		perturbMerge = []
+		for li in perturbsBank:
+			perturbMerge.extend(li)
 
-	perturbMerge = np.array(perturbMerge)
-	diffValsMerge = np.array(diffValsMerge)
+		diffValsMerge = []
+		for li in diffValsBank:
+			diffValsMerge.extend(li)
 
-	#Save result
-	pickle.dump(perturbMerge, open(perturboutFiNa,"wb"), protocol =  pickle.HIGHEST_PROTOCOL)
-	pickle.dump(diffValsMerge, open(diffoutFiNa,"wb"), protocol =  pickle.HIGHEST_PROTOCOL)
+		perturbMerge = np.array(perturbMerge)
+		diffValsMerge = np.array(diffValsMerge)
 
-	print "perturbMerge size",perturbMerge.shape
-	print "diffValsMerge size",diffValsMerge.shape
+		#Save result
+		pickle.dump(perturbMerge, open(perturboutFiNa,"wb"), protocol =  pickle.HIGHEST_PROTOCOL)
+		pickle.dump(diffValsMerge, open(diffoutFiNa,"wb"), protocol =  pickle.HIGHEST_PROTOCOL)
+
+		print "perturbMerge size",perturbMerge.shape
+		print "diffValsMerge size",diffValsMerge.shape
 
 
 	if 0:	
