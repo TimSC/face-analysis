@@ -55,8 +55,7 @@ class CombinedModel:
 
 	def ImageToNormaliseFace(self, im, pos):
 		#Return a shape free face based on annotated positions
-
-		return self.shapeModel.NormaliseFace(im, pos)
+		return self.shapeModel.NormaliseFace(im, pos, (self.appModel.imgShape[0], self.appModel.imgShape[1]))
 
 	def NormalisedFaceAndShapeToEigenVec(self, normFace, shape):
 		

@@ -9,7 +9,7 @@ if __name__ == "__main__":
 
 	for count, (im, framePos) in enumerate(zip(pics, posData)):
 		print count, len(pics)
-		shapefree = shapeModel.NormaliseFace(im, framePos)
+		shapefree = shapeModel.NormaliseFace(im, framePos, (100,100))
 		shapefree.save("shapefree/{0:05d}.png".format(count))
 
 	print "All done!"

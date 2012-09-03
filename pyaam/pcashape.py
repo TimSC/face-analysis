@@ -11,7 +11,6 @@ class ShapeModel:
 		self.eigenShapes = eigenShapes
 		self.variances = variances
 		self.inTriangle, self.vertices = None, None
-		self.sizeImage = (400, 400)
 
 	def GenShape(self, shapeParam, stdDevScaled = True):
 		#Generate shape from eigenvalues based on mean shape and eigenvectors
@@ -28,17 +27,17 @@ class ShapeModel:
 		final = np.vstack((shapeX, shapeY)).transpose()
 		return final
 
-	def CalcTesselation(self):
+	def CalcTesselation(self, imSize):
 		tess = spatial.Delaunay(self.meanShape)
 		self.vertices = tess.vertices
 		#print len(tess.points)
 		#print len(tess.vertices)
 
 		#Determine which tesselation triangle contains each pixel in the shape norm image
-		self.inTriangle = np.ones(self.sizeImage, dtype=np.int) * -1
-		for i in range(self.sizeImage[0]):
-			for j in range(self.sizeImage[1]):
-				normSpaceCoord = (float(i)/self.sizeImage[0],float(j)/self.sizeImage[1])
+		self.inTriangle = np.ones(imSize, dtype=np.int) * -1
+		for i in range(imSize[0]):
+			for j in range(imSize[1]):
+				normSpaceCoord = (float(i)/imSize[0],float(j)/imSize[1])
 				simp = tess.find_simplex([normSpaceCoord])
 				self.inTriangle[i,j] = simp
 		
@@ -55,15 +54,15 @@ class ShapeModel:
 	#	scaledShape = (2. * shape - 1.) * vec[2] + (vec[0], vec[1])
 	#	return self.NormaliseFace(im, scaledShape)
 
-	def NormaliseFace(self, im, pos):
+	def NormaliseFace(self, im, pos, imSize):
 		#Normalise face based on image position points
 
-		if self.inTriangle is None: self.CalcTesselation()
+		if self.inTriangle is None: self.CalcTesselation(imSize)
 		pos = np.array(pos)
 	
 		#Find affine mapping from mean shape to input positions
 		triAffines = []
-		scaledShape = self.meanShape * self.sizeImage[0]
+		scaledShape = np.array(zip([pt[0] * imSize[0] for pt in self.meanShape],[pt[1] * imSize[1] for pt in self.meanShape]))
 
 		for i, tri in enumerate(self.vertices):
 			meanVertPos = np.hstack((scaledShape[tri], np.ones((3,1)))).transpose()
@@ -74,7 +73,7 @@ class ShapeModel:
 
 		#Synthesis shape norm image		
 		imArr = np.asarray(im, dtype=np.float32)
-		synthArr = np.zeros((self.sizeImage[1], self.sizeImage[0], len(im.mode)), dtype=np.uint8)
+		synthArr = np.zeros((imSize[1], imSize[0], len(im.mode)), dtype=np.uint8)
 		warpcython.WarpProcessing(im, imArr, synthArr, self.inTriangle, triAffines, scaledShape)
 
 		synth = Image.fromarray(synthArr)

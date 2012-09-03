@@ -55,7 +55,7 @@ if __name__ == "__main__":
 	#b = shapeModel.GenShape(0.)
 	#c = shapeModel.GenShape(.1)
 
-	shapeModel.CalcTesselation()
+	#shapeModel.CalcTesselation()
 
 	pickle.dump(shapeModel, open("shapemodel.dat","wb"), protocol =  pickle.HIGHEST_PROTOCOL)
 	pickle.dump(frameProcPcaSpace, open("shapepcaspace.dat","wb"), protocol =  pickle.HIGHEST_PROTOCOL)

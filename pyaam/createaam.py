@@ -1,22 +1,127 @@
 #!/usr/bin/env python
-import pickle, picseqloader, pcacombined, random
+import pickle, picseqloader, pcacombined, random, time
 from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
 from optparse import OptionParser
+import multiprocessing
 
-def CalculateOffsetEffect(combinedModel, vals, im, shapefree, pixelSubset):
+def GenerateTrainingSamples(processNum, numProcesses, posData, pics, combinedModel, perturbsOut, diffValsOut):
 
-	#Perturb values
-	changedVals = np.copy(vals)
-	perturb = np.zeros(changedVals.shape)	
-	perturb[0] = random.randint(-50, 50)
-	perturb[1] = random.randint(-50, 50)
-	perturb[2] = random.randint(-50, 50)
-	perturb[3] = random.randint(-10, 10)
-	for i in range(4, perturb.shape[0]):
-		perturb[i] = random.random() - 0.5
-	changedVals = changedVals + perturb
+	for frameCount, (framePos, im) in enumerate(zip(posData, pics)):
+		#Distribute frames between the threads
+		if (frameCount + processNum) % numProcesses != 0:
+			continue
+
+		#Get shape free face
+		shapefree = combinedModel.ImageToNormaliseFace(im, framePos)
+
+		#Convert normalised face and shape to combined model eigenvalues
+		vals = combinedModel.NormalisedFaceAndShapeToEigenVec(shapefree, framePos)
+
+		#Select a sample of pixels to base predictions	
+		#I am unsure if this is part of the canonical AAM system
+		pixList = []
+		for i in range(shapefree.size[0]):
+			for j in range(shapefree.size[1]):
+				pixList.append((i,j))
+		pixelSubset = random.sample(pixList, 1000)
+
+		horizonalSamples = [pt[0] for pt in framePos]
+		horizontalRange = max(horizonalSamples) - min(horizonalSamples)
+
+		#The parameters used in this section are taken from
+		#http://www2.imm.dtu.dk/~aam/main/node16.html
+
+		offsetExamples = [-0.2, -0.1, -0.03, 0.03, 0.1, 0.2]
+		#Perturb X
+		for offsetExample in offsetExamples:
+			print "frame=",frameCount,",process=",processNum
+
+			#Perturb values
+			changedVals = np.copy(vals)
+			perturb = np.zeros(changedVals.shape)	
+			perturb[0] = offsetExample * horizontalRange
+			changedVals = changedVals + perturb
+
+			diffVal = CalculateOffsetEffect(combinedModel, changedVals, im, shapefree, pixelSubset)
+			perturbsOut.append(perturb)
+			diffValsOut.append(diffVal)
+
+			time.sleep(0.01)
+
+		#Perturb Y
+		for offsetExample in offsetExamples:
+			print "frame=",frameCount,",process=",processNum
+
+			#Perturb values
+			changedVals = np.copy(vals)
+			perturb = np.zeros(changedVals.shape)	
+			perturb[1] = offsetExample * horizontalRange
+			changedVals = changedVals + perturb
+
+			diffVal = CalculateOffsetEffect(combinedModel, changedVals, im, shapefree, pixelSubset)
+			perturbsOut.append(perturb)
+			diffValsOut.append(diffVal)
+
+			time.sleep(0.01)
+
+		#Perturb Scale
+		scaleExamples = [0.95, 0.97, 0.99, 1.01, 1.03, 1.05]
+		for scaleExample in scaleExamples:
+			print "frame=",frameCount,",process=",processNum
+
+			#Perturb values
+			changedVals = np.copy(vals)
+			perturb = np.zeros(changedVals.shape)	
+			perturb[2] = scaleExample
+			changedVals = changedVals + perturb
+
+			diffVal = CalculateOffsetEffect(combinedModel, changedVals, im, shapefree, pixelSubset)
+			perturbsOut.append(perturb)
+			diffValsOut.append(diffVal)
+
+			time.sleep(0.01)
+
+		#Perturb rotation
+		rotationExamples = [-5, -3, -1, 1, 3, 5]
+		for rotationExample in rotationExamples:
+			print "frame=",frameCount,",process=",processNum
+
+			#Perturb values
+			changedVals = np.copy(vals)
+			perturb = np.zeros(changedVals.shape)	
+			perturb[3] = rotationExample
+			changedVals = changedVals + perturb
+
+			diffVal = CalculateOffsetEffect(combinedModel, changedVals, im, shapefree, pixelSubset)
+			perturbsOut.append(perturb)
+			diffValsOut.append(diffVal)
+
+			time.sleep(0.01)		
+
+		#Perturb combined model, for each feature
+		perturbExamples = [-0.5, -0.25, 0.25, 0.5]
+		numEigVals = int(round(len(vals) * 0.3))
+		for featNum in range(4, 4+numEigVals):
+			for perturbExample in perturbExamples:
+				print "frame=",frameCount,"of",len(posData),",featNum=",featNum,",process=",processNum, numEigVals
+
+				#Perturb values
+				changedVals = np.copy(vals)
+				perturb = np.zeros(changedVals.shape)	
+				perturb[featNum] = perturbExample
+				changedVals = changedVals + perturb
+
+				diffVal = CalculateOffsetEffect(combinedModel, changedVals, im, shapefree, pixelSubset)
+				perturbsOut.append(perturb)
+				diffValsOut.append(diffVal)
+
+				time.sleep(0.01)	
+
+	return None
+
+def CalculateOffsetEffect(combinedModel, changedVals, im, shapefree, pixelSubset):
 
 	#Reconstruct synthetic image
 	synthApp, synthShape = combinedModel.EigenVecToNormFaceAndShape(changedVals)
@@ -28,6 +133,7 @@ def CalculateOffsetEffect(combinedModel, vals, im, shapefree, pixelSubset):
 	#Calculate difference
 	changedValNormImageArr = np.asarray(changedValNormImage, dtype=np.float)
 	
+	shapefreeArr = np.asarray(shapefree, dtype=np.float)
 	diff = changedValNormImageArr - shapefreeArr
 
 	#diffIm = Image.new("RGB", shapefree.size)
@@ -47,7 +153,7 @@ def CalculateOffsetEffect(combinedModel, vals, im, shapefree, pixelSubset):
 		#print px, diff[px[0],px[1],:]
 		diffVals.extend(diff[px[0],px[1],:])
 
-	return perturb, diffVals
+	return diffVals
 
 if __name__ == "__main__":
 
@@ -68,35 +174,43 @@ if __name__ == "__main__":
 	combinedModel = pickle.load(open("combinedmodel.dat","rb"))
 	(pics, posData) = picseqloader.LoadTimDatabase()
 
-	perturbs = []
-	diffVals = []
-	for frameCount, (framePos, im) in enumerate(zip(posData, pics)):
+	numProcessors = multiprocessing.cpu_count()
+	manager = multiprocessing.Manager()
+	processes, perturbsBank, diffValsBank = [], [], []
+	for count in range(numProcessors):
+		perturbsOut = manager.list()
+		diffValsOut = manager.list()
+		p = multiprocessing.Process(target=GenerateTrainingSamples, args=(count, \
+			numProcessors, posData, pics, combinedModel, perturbsOut, diffValsOut))
+		p.start()
+		processes.append(p)
+		perturbsBank.append(perturbsOut)
+		diffValsBank.append(diffValsOut)
 
-		#Get shape free face
-		shapefree = combinedModel.ImageToNormaliseFace(im, framePos)
-		shapefreeArr = np.asarray(shapefree, dtype=np.float)
+	for p in processes:
+		p.join()
 
-		#Convert normalised face and shape to combined model eigenvalues
-		vals = combinedModel.NormalisedFaceAndShapeToEigenVec(shapefree, framePos)
+	#Collect process results into final data structure
+	perturbMerge = []
+	for li in perturbsBank:
+		perturbMerge.extend(li)
 
-		#Select a sample of pixels to base predictions	
-		#I am unsure if this is part of the canonical AAM system
-		pixList = []
-		for i in range(shapefree.size[0]):
-			for j in range(shapefree.size[1]):
-				pixList.append((i,j))
-		pixelSubset = random.sample(pixList, 1000)
+	diffValsMerge = []
+	for li in diffValsBank:
+		diffValsMerge.extend(li)
 
-		for trainCount in range(100):
-			print frameCount, trainCount
-			perturb, diffVal = CalculateOffsetEffect(combinedModel, vals, im, shapefree, pixelSubset)
-			perturbs.append(perturb)
-			diffVals.append(diffVal)
-	
-		pickle.dump(perturbs, open(perturboutFiNa,"wb"), protocol =  pickle.HIGHEST_PROTOCOL)
-		pickle.dump(diffVals, open(diffoutFiNa,"wb"), protocol =  pickle.HIGHEST_PROTOCOL)
+	perturbMerge = np.array(perturbMerge)
+	diffValsMerge = np.array(diffValsMerge)
 
-	if 1:	
+	#Save result
+	pickle.dump(perturbMerge, open(perturboutFiNa,"wb"), protocol =  pickle.HIGHEST_PROTOCOL)
+	pickle.dump(diffValsMerge, open(diffoutFiNa,"wb"), protocol =  pickle.HIGHEST_PROTOCOL)
+
+	print "perturbMerge size",perturbMerge.shape
+	print "diffValsMerge size",diffValsMerge.shape
+
+
+	if 0:	
 		perturbs = pickle.load(open(perturboutFiNa,"rb"))
 		diffVals = pickle.load(open(diffoutFiNa,"rb"))
 
@@ -111,4 +225,16 @@ if __name__ == "__main__":
 		print np.corrcoef(perturbs[80:,col], predict[:,col])
 		plt.plot(perturbs[80:,col], predict[:,col])
 		plt.show()
+
+	if 0:
+			#Perturb values
+			changedVals = np.copy(vals)
+			perturb = np.zeros(changedVals.shape)	
+			perturb[0] = random.randint(-50, 50)
+			perturb[1] = random.randint(-50, 50)
+			perturb[2] = random.randint(-50, 50)
+			perturb[3] = random.randint(-10, 10)
+			for i in range(4, perturb.shape[0]):
+				perturb[i] = random.random() - 0.5
+			changedVals = changedVals + perturb
 
