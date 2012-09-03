@@ -8,11 +8,11 @@ import multiprocessing
 
 def GenerateTrainingSamples(processNum, numProcesses, posData, pics, combinedModel, perturbsOut):
 
+	countExamples = 0
 	for frameCount, (framePos, im) in enumerate(zip(posData, pics)):
 		#Distribute frames between the threads
 		if (frameCount + processNum) % numProcesses != 0:
 			continue
-		countExamples = 0
 
 		#Get shape free face
 		shapefree = combinedModel.ImageToNormaliseFace(im, framePos)
