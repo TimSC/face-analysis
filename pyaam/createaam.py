@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from optparse import OptionParser
 import multiprocessing
 
-def GenerateTrainingSamples(processNum, numProcesses, posData, pics, combinedModel, perturbsOut):
+def GenerateTrainingSamples(processNum, numProcesses, posData, pics, combinedModel, perturbsOut, pixelSubset):
 
 	countExamples = 0
 	for frameCount, (framePos, im) in enumerate(zip(posData, pics)):
@@ -19,14 +19,6 @@ def GenerateTrainingSamples(processNum, numProcesses, posData, pics, combinedMod
 
 		#Convert normalised face and shape to combined model eigenvalues
 		vals = combinedModel.NormalisedFaceAndShapeToEigenVec(shapefree, framePos)
-
-		#Select a sample of pixels to base predictions	
-		#I am unsure if this is part of the canonical AAM system
-		pixList = []
-		for i in range(shapefree.size[0]):
-			for j in range(shapefree.size[1]):
-				pixList.append((i,j))
-		pixelSubset = random.sample(pixList, 1000)
 
 		horizonalSamples = [pt[0] for pt in framePos]
 		horizontalRange = max(horizonalSamples) - min(horizonalSamples)
@@ -191,13 +183,21 @@ if __name__ == "__main__":
 		fina = "perterbs{0}.dat".format(count)
 		if os.path.exists(fina): os.unlink(fina)
 
+	#Select a sample of pixels to base predictions	
+	#I am unsure if this is part of the canonical AAM system
+	pixList = []
+	for i in range(combinedModel.appModel.imgShape[0]):
+		for j in range(combinedModel.appModel.imgShape[1]):
+			pixList.append((i,j))
+	pixelSubset = random.sample(pixList, 300)
+
 	#Generate training data with multiple processors
 	manager = multiprocessing.Manager()
 	processes, perturbsBank, diffValsBank = [], [], []
 	for count in range(numProcessors):
 		perturbsOut = shelve.open("perterbs{0}.dat".format(count), protocol =  pickle.HIGHEST_PROTOCOL)
 		p = multiprocessing.Process(target=GenerateTrainingSamples, args=(count, \
-			numProcessors, posData, pics, combinedModel, perturbsOut))
+			numProcessors, posData, pics, combinedModel, perturbsOut, pixelSubset))
 		p.start()
 		processes.append(p)
 		perturbsBank.append(perturbsOut)
@@ -206,7 +206,7 @@ if __name__ == "__main__":
 		p.join()
 
 	for per in perturbsBank:
-		print len(per)
+		print len(per.keys())
 
 	if 0:
 		#Collect process results into final data structure
@@ -218,8 +218,8 @@ if __name__ == "__main__":
 		for li in diffValsBank:
 			diffValsMerge.extend(li)
 
-		perturbMerge = np.array(perturbMerge)
-		diffValsMerge = np.array(diffValsMerge)
+		#perturbMerge = np.array(perturbMerge)
+		#diffValsMerge = np.array(diffValsMerge)
 
 		#Save result
 		pickle.dump(perturbMerge, open(perturboutFiNa,"wb"), protocol =  pickle.HIGHEST_PROTOCOL)
