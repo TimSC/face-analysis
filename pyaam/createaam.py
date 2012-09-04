@@ -39,7 +39,7 @@ def GenerateTrainingSamples(processNum, numProcesses, posData, pics, combinedMod
 			changedVals = changedVals + perturb
 
 			diffVal = CalculateOffsetEffect(combinedModel, changedVals, im, shapefree, pixelSubset)
-			perturbsOut[str(countExamples)] = (perturb, diffVal)
+			perturbsOut[str(countExamples)] = (0, offsetExample * horizontalRange, diffVal)
 			countExamples += 1
 
 			time.sleep(0.01)
@@ -57,7 +57,7 @@ def GenerateTrainingSamples(processNum, numProcesses, posData, pics, combinedMod
 			changedVals = changedVals + perturb
 
 			diffVal = CalculateOffsetEffect(combinedModel, changedVals, im, shapefree, pixelSubset)
-			perturbsOut[str(countExamples)] = (perturb, diffVal)
+			perturbsOut[str(countExamples)] = (1, offsetExample * horizontalRange, diffVal)
 			countExamples += 1
 
 			time.sleep(0.01)
@@ -76,7 +76,7 @@ def GenerateTrainingSamples(processNum, numProcesses, posData, pics, combinedMod
 			changedVals = changedVals + perturb
 
 			diffVal = CalculateOffsetEffect(combinedModel, changedVals, im, shapefree, pixelSubset)
-			perturbsOut[str(countExamples)] = (perturb, diffVal)
+			perturbsOut[str(countExamples)] = (2, scaleExample * vals[2], diffVal)
 			countExamples += 1
 
 			time.sleep(0.01)
@@ -95,7 +95,7 @@ def GenerateTrainingSamples(processNum, numProcesses, posData, pics, combinedMod
 			changedVals = changedVals + perturb
 
 			diffVal = CalculateOffsetEffect(combinedModel, changedVals, im, shapefree, pixelSubset)
-			perturbsOut[str(countExamples)] = (perturb, diffVal)
+			perturbsOut[str(countExamples)] = (3, rotationExample, diffVal)
 			countExamples += 1
 
 			time.sleep(0.01)		
@@ -116,7 +116,7 @@ def GenerateTrainingSamples(processNum, numProcesses, posData, pics, combinedMod
 				changedVals = changedVals + perturb
 
 				diffVal = CalculateOffsetEffect(combinedModel, changedVals, im, shapefree, pixelSubset)
-				perturbsOut[str(countExamples)] = (perturb, diffVal)
+				perturbsOut[str(countExamples)] = (featNum, perturbExample, diffVal)
 				countExamples += 1
 
 				time.sleep(0.01)	
