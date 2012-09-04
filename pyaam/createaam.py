@@ -190,6 +190,7 @@ if __name__ == "__main__":
 		for j in range(combinedModel.appModel.imgShape[1]):
 			pixList.append((i,j))
 	pixelSubset = random.sample(pixList, 300)
+	pickle.dump(pixelSubset, open("pixelSubset.dat","wb"), protocol =  pickle.HIGHEST_PROTOCOL)
 
 	#Generate training data with multiple processors
 	manager = multiprocessing.Manager()
