@@ -45,10 +45,14 @@ if __name__ == "__main__":
 	
 	comp = np.where(perturbIndex == 0)
 	model = linear_model.LinearRegression()
-	model.fit(diffInts[comp,:], perturbCollect[comp,:])
+	diffInts2d = diffInts[comp,:][0,:,:]
 	
-	pred = model.predict(diffInts[comp,:])
+	print diffInts2d.shape
+	print perturbCollect[comp].shape
+	model.fit(diffInts2d, perturbCollect[comp])
 	
-	plt.plot(diffInts[comp,:], pred, '.')
+	pred = model.predict(diffInts2d)
+	
+	plt.plot(perturbCollect[comp], pred, '.')
 	plt.show()
 	
