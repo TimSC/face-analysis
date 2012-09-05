@@ -5,122 +5,140 @@ import numpy as np
 import matplotlib.pyplot as plt
 from optparse import OptionParser
 import multiprocessing
+import sklearn.linear_model as linear_model
+import sklearn.ensemble as ensemble
 
-def GenerateTrainingSamples(processNum, numProcesses, posData, pics, combinedModel, perturbsOut, pixelSubset):
+def GenerateTrainingSamples(processNum, numProcesses, posData, pics, combinedModel, work, predictorsOut, pixelSubset):
 
-	countExamples = 0
-	for frameCount, (framePos, im) in enumerate(zip(posData, pics)):
-		#Distribute frames between the threads
-		if (frameCount + processNum) % numProcesses != 0:
+	running = True
+
+	while running:
+		diffInt = []
+		perturbCollect = []
+
+		#Get next component number to process
+		try:
+			componentNum = work.pop(0)
+		except IndexError:
+			running = False
 			continue
 
-		#Get shape free face
-		shapefree = combinedModel.ImageToNormaliseFace(im, framePos)
+		#For each training image
+		for frameCount, (framePos, im) in enumerate(zip(posData, pics)):
 
-		#Convert normalised face and shape to combined model eigenvalues
-		vals = combinedModel.NormalisedFaceAndShapeToEigenVec(shapefree, framePos)
+			#Get shape free face
+			shapefree = combinedModel.ImageToNormaliseFace(im, framePos)
 
-		horizonalSamples = [pt[0] for pt in framePos]
-		horizontalRange = max(horizonalSamples) - min(horizonalSamples)
+			#Convert normalised face and shape to combined model eigenvalues
+			vals = combinedModel.NormalisedFaceAndShapeToEigenVec(shapefree, framePos)
 
-		#The parameters used in this section are taken from
-		#Active Appearance Models: Theory, Extensions and Cases by Mikkel Bille Stegmann, 2000
-		#http://www2.imm.dtu.dk/~aam/main/node16.html
+			horizonalSamples = [pt[0] for pt in framePos]
+			horizontalRange = max(horizonalSamples) - min(horizonalSamples)
 
-		offsetExamples = [-0.2, -0.1, -0.03, 0.03, 0.1, 0.2]
-		#Perturb X
-		for offsetExample in offsetExamples:
-			print "frame=",frameCount,",process=",processNum
+			#The parameters used in this section are taken from
+			#Active Appearance Models: Theory, Extensions and Cases by Mikkel Bille Stegmann, 2000
+			#http://www2.imm.dtu.dk/~aam/main/node16.html
 
-			#Perturb values
-			changedVals = np.copy(vals)
-			perturb = np.zeros(changedVals.shape)	
-			perturb[0] = offsetExample * horizontalRange
-			changedVals = changedVals + perturb
+			if componentNum == 0:
+				offsetExamples = [-0.2, -0.1, -0.03, 0.03, 0.1, 0.2]
+				#Perturb X
+				for offsetExample in offsetExamples:
+					print "frame=",frameCount,",process=",processNum,",componentNum=",componentNum
 
-			diffVal = CalculateOffsetEffect(combinedModel, changedVals, im, shapefree, pixelSubset)
-			perturbsOut[str(countExamples)] = (0, offsetExample * horizontalRange, diffVal)
-			countExamples += 1
+					#Perturb values
+					changedVals = np.copy(vals)
+					perturb = np.zeros(changedVals.shape)	
+					perturb[0] = offsetExample * horizontalRange
+					changedVals = changedVals + perturb
 
-			time.sleep(0.01)
+					diffVal = CalculateOffsetEffect(combinedModel, changedVals, im, shapefree, pixelSubset)
+					perturbCollect.append(offsetExample * horizontalRange)
+					diffInt.append(diffVal)
 
-		perturbsOut.sync()
+					time.sleep(0.01)
 
-		#Perturb Y
-		for offsetExample in offsetExamples:
-			print "frame=",frameCount,",process=",processNum
+			if componentNum == 1:
+				offsetExamples = [-0.2, -0.1, -0.03, 0.03, 0.1, 0.2]
+				#Perturb Y
+				for offsetExample in offsetExamples:
+					print "frame=",frameCount,",process=",processNum,",componentNum=",componentNum
 
-			#Perturb values
-			changedVals = np.copy(vals)
-			perturb = np.zeros(changedVals.shape)	
-			perturb[1] = offsetExample * horizontalRange
-			changedVals = changedVals + perturb
+					#Perturb values
+					changedVals = np.copy(vals)
+					perturb = np.zeros(changedVals.shape)	
+					perturb[1] = offsetExample * horizontalRange
+					changedVals = changedVals + perturb
 
-			diffVal = CalculateOffsetEffect(combinedModel, changedVals, im, shapefree, pixelSubset)
-			perturbsOut[str(countExamples)] = (1, offsetExample * horizontalRange, diffVal)
-			countExamples += 1
+					diffVal = CalculateOffsetEffect(combinedModel, changedVals, im, shapefree, pixelSubset)
+					perturbCollect.append(offsetExample * horizontalRange)
+					diffInt.append(diffVal)
 
-			time.sleep(0.01)
+					time.sleep(0.01)
 
-		perturbsOut.sync()
+			if componentNum == 2:
+				#Perturb Scale
+				scaleExamples = [0.95, 0.97, 0.99, 1.01, 1.03, 1.05]
+				for scaleExample in scaleExamples:
+					print "frame=",frameCount,",process=",processNum,",componentNum=",componentNum
 
-		#Perturb Scale
-		scaleExamples = [0.95, 0.97, 0.99, 1.01, 1.03, 1.05]
-		for scaleExample in scaleExamples:
-			print "frame=",frameCount,",process=",processNum
+					#Perturb values
+					changedVals = np.copy(vals)
+					perturb = np.zeros(changedVals.shape)	
+					perturb[2] = scaleExample * vals[2] #Scale by current value
+					changedVals = changedVals + perturb
 
-			#Perturb values
-			changedVals = np.copy(vals)
-			perturb = np.zeros(changedVals.shape)	
-			perturb[2] = scaleExample * vals[2] #Scale by current value
-			changedVals = changedVals + perturb
+					diffVal = CalculateOffsetEffect(combinedModel, changedVals, im, shapefree, pixelSubset)
+					perturbCollect.append(scaleExample * vals[2])
+					diffInt.append(diffVal)
 
-			diffVal = CalculateOffsetEffect(combinedModel, changedVals, im, shapefree, pixelSubset)
-			perturbsOut[str(countExamples)] = (2, scaleExample * vals[2], diffVal)
-			countExamples += 1
+					time.sleep(0.01)
 
-			time.sleep(0.01)
+			if componentNum == 3:
+				#Perturb rotation
+				rotationExamples = [-5, -3, -1, 1, 3, 5]
+				for rotationExample in rotationExamples:
+					print "frame=",frameCount,",process=",processNum,",componentNum=",componentNum
 
-		perturbsOut.sync()
+					#Perturb values
+					changedVals = np.copy(vals)
+					perturb = np.zeros(changedVals.shape)	
+					perturb[3] = rotationExample
+					changedVals = changedVals + perturb
 
-		#Perturb rotation
-		rotationExamples = [-5, -3, -1, 1, 3, 5]
-		for rotationExample in rotationExamples:
-			print "frame=",frameCount,",process=",processNum
+					diffVal = CalculateOffsetEffect(combinedModel, changedVals, im, shapefree, pixelSubset)
+					perturbCollect.append(rotationExample)
+					diffInt.append(diffVal)
 
-			#Perturb values
-			changedVals = np.copy(vals)
-			perturb = np.zeros(changedVals.shape)	
-			perturb[3] = rotationExample
-			changedVals = changedVals + perturb
+					time.sleep(0.01)		
 
-			diffVal = CalculateOffsetEffect(combinedModel, changedVals, im, shapefree, pixelSubset)
-			perturbsOut[str(countExamples)] = (3, rotationExample, diffVal)
-			countExamples += 1
+			if componentNum >= 4:
+				#Perturb combined model, for each feature
+				perturbExamples = [-0.5, -0.25, 0.25, 0.5]
+				for perturbExample in perturbExamples:
+					print "frame=",frameCount,"of",len(posData),",componentNum=",componentNum,",process=",processNum
 
-			time.sleep(0.01)		
+					#Perturb values
+					changedVals = np.copy(vals)
+					perturb = np.zeros(changedVals.shape)	
+					perturb[componentNum] = perturbExample
+					changedVals = changedVals + perturb
 
-		perturbsOut.sync()
+					diffVal = CalculateOffsetEffect(combinedModel, changedVals, im, shapefree, pixelSubset)
+					perturbCollect.append(perturbExample)
+					diffInt.append(diffVal)
 
-		#Perturb combined model, for each feature
-		perturbExamples = [-0.5, -0.25, 0.25, 0.5]
-		numEigVals = int(round(len(vals) * 0.3))
-		for featNum in range(4, 4+numEigVals):
-			for perturbExample in perturbExamples:
-				print "frame=",frameCount,"of",len(posData),",featNum=",featNum,"of",numEigVals,",process=",processNum
+					time.sleep(0.01)	
 
-				#Perturb values
-				changedVals = np.copy(vals)
-				perturb = np.zeros(changedVals.shape)	
-				perturb[featNum] = perturbExample
-				changedVals = changedVals + perturb
+		#Change to arrays
+		diffInt = np.array(diffInt)
+		perturbCollect = np.array(perturbCollect)
 
-				diffVal = CalculateOffsetEffect(combinedModel, changedVals, im, shapefree, pixelSubset)
-				perturbsOut[str(countExamples)] = (featNum, perturbExample, diffVal)
-				countExamples += 1
+		#Learn predictor for this component
+		model = linear_model.LinearRegression()
+		model.fit(diffInt, perturbCollect)
+		pred = model.predict(diffInt)
 
-				time.sleep(0.01)	
-			perturbsOut.sync()
+		predictorsOut[componentNum] = model
 
 	return None
 
@@ -192,22 +210,27 @@ if __name__ == "__main__":
 	pixelSubset = random.sample(pixList, 300)
 	pickle.dump(pixelSubset, open("pixelSubset.dat","wb"), protocol =  pickle.HIGHEST_PROTOCOL)
 
-	#Generate training data with multiple processors
+	#Create list of work to coordinate processes
 	manager = multiprocessing.Manager()
-	processes, perturbsBank, diffValsBank = [], [], []
+	work = manager.list()
+	numEigVals = int(round(combinedModel.NumComponentsExtended() * 0.3))
+	for componentNum in range(numEigVals):
+		work.append(componentNum)
+	predictorsOut = manager.dict()
+
+	#Generate training data with multiple processors
+	processes = []
 	for count in range(numProcessors):
-		perturbsOut = shelve.open("perterbs{0}.dat".format(count), protocol =  pickle.HIGHEST_PROTOCOL)
 		p = multiprocessing.Process(target=GenerateTrainingSamples, args=(count, \
-			numProcessors, posData, pics, combinedModel, perturbsOut, pixelSubset))
+			numProcessors, posData, pics, combinedModel, work, predictorsOut, pixelSubset))
 		p.start()
 		processes.append(p)
-		perturbsBank.append(perturbsOut)
 
 	for p in processes:
 		p.join()
 
-	for per in perturbsBank:
-		print len(per.keys())
+	print len(predictorsOut)
+	pickle.dump(predictorsOut, open("predictors.dat", "wb"), protocol =  pickle.HIGHEST_PROTOCOL)
 
 	if 0:
 		#Collect process results into final data structure

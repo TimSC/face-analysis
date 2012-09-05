@@ -13,6 +13,12 @@ class CombinedModel:
 		self.numAppComp = numAppComp
 		self.shapeScaleFactor = shapeScaleFactor
 
+	def NumComponentsCompact(self):
+		return self.eigenVec.shape[1]
+
+	def NumComponentsExtended(self):
+		return self.NumComponentsCompact() + 4
+
 	def GenerateFace(self, combinedVals):
 	
 		#Convert from combined PCA space to appearance and shape PCA space
