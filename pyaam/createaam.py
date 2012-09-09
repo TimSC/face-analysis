@@ -134,7 +134,7 @@ def GenerateTrainingSamples(processNum, numProcesses, posData, pics, combinedMod
 		perturbCollect = np.array(perturbCollect)
 
 		#Learn predictor for this component
-		model = linear_model.LinearRegression()
+		model = linear_model.LinearRegression(fit_intercept=False)
 		model.fit(diffInt, perturbCollect)
 		pred = model.predict(diffInt)
 
