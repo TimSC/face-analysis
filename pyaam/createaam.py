@@ -230,7 +230,7 @@ if __name__ == "__main__":
 		p.join()
 
 	print len(predictorsOut)
-	pickle.dump(predictorsOut, open("predictors.dat", "wb"), protocol =  pickle.HIGHEST_PROTOCOL)
+	pickle.dump(dict(predictorsOut), open("predictors.dat", "wb"), protocol =  pickle.HIGHEST_PROTOCOL)
 
 	if 0:
 		#Collect process results into final data structure
