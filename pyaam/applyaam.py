@@ -21,7 +21,7 @@ def AamPredict(combinedModel, pixelSubset, predictors, im, changedVals):
 
 	pred = predictors[0]
 	predVal = pred.predict(diffVals)
-	return predVal
+	return predVal + changedVals
 
 if __name__ == "__main__":
 	perturboutFiNa = "perturbs.dat"
@@ -49,17 +49,23 @@ if __name__ == "__main__":
 	horizonalSamples = [pt[0] for pt in framePos]
 	horizontalRange = max(horizonalSamples) - min(horizonalSamples)
 	offsetExample = -0.15
-	
-	changedVals = np.copy(vals)
-	perturb = np.zeros(changedVals.shape)	
-	perturb[0] = offsetExample * horizontalRange
-	changedVals = changedVals + perturb
 
-	print perturb[0]
+	x, y = [], []	
+	for off in range(-200, 200):
 
-	#Reconstruct synthetic image
-	synthApp, synthShape = combinedModel.EigenVecToNormFaceAndShape(changedVals)
+		changedVals = np.copy(vals)
+		perturb = np.zeros(changedVals.shape)
+		perturb[0] = off#offsetExample * horizontalRange
+		changedVals = changedVals + perturb
 
-	predVal = AamPredict(combinedModel, pixelSubset, predictors, im, changedVals)
-	print predVal
+		#Reconstruct synthetic image
+		synthApp, synthShape = combinedModel.EigenVecToNormFaceAndShape(changedVals)
+
+		predVal = AamPredict(combinedModel, pixelSubset, predictors, im, changedVals)
+		print off, changedVals[0], predVal[0]
+		x.append(changedVals[0])
+		y.append(predVal[0])
+
+	plt.plot(x,y)
+	plt.show()
 
