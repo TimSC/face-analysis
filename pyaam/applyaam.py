@@ -2,6 +2,27 @@ import pickle, pcacombined, picseqloader
 import numpy as np
 import matplotlib.pyplot as plt
 
+def AamPredict(combinedModel, pixelSubset, predictors, im, changedVals):
+
+	#Reconstruct synthetic image
+	synthApp, synthShape = combinedModel.EigenVecToNormFaceAndShape(changedVals)
+
+	#Get norm face from source, based on perturbed shape
+	perturbSourceFace = combinedModel.ImageToNormaliseFace(im, synthShape)
+
+	synthAppArr = np.asarray(synthApp, dtype=np.float)
+	diff = synthAppArr - perturbSourceFace
+
+	#Extract pixels from diff
+	diffVals = []
+	for px in pixelSubset:
+		#print px, diff[px[0],px[1],:]
+		diffVals.extend(diff[px[0],px[1],:])
+
+	pred = predictors[0]
+	predVal = pred.predict(diffVals)
+	return predVal
+
 if __name__ == "__main__":
 	perturboutFiNa = "perturbs.dat"
 	diffoutFiNa = "diffVals.dat"
@@ -39,19 +60,6 @@ if __name__ == "__main__":
 	#Reconstruct synthetic image
 	synthApp, synthShape = combinedModel.EigenVecToNormFaceAndShape(changedVals)
 
-	#Get norm face from source, based on perturbed shape
-	perturbSourceFace = combinedModel.ImageToNormaliseFace(im, synthShape)
-
-	synthAppArr = np.asarray(synthApp, dtype=np.float)
-	diff = synthAppArr - perturbSourceFace
-
-	#Extract pixels from diff
-	diffVals = []
-	for px in pixelSubset:
-		#print px, diff[px[0],px[1],:]
-		diffVals.extend(diff[px[0],px[1],:])
-
-	pred = predictors[0]
-	print pred.predict(diffVals)
-
+	predVal = AamPredict(combinedModel, pixelSubset, predictors, im, changedVals)
+	print predVal
 
