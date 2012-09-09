@@ -12,6 +12,7 @@ if __name__ == "__main__":
 
 	#Load prediction model
 	predictors = pickle.load(open("predictors.dat", "rb"))
+	pixelSubset = pickle.load(open("pixelSubset.dat","rb"))
 
 	#For each training image
 	frameNum = 0
@@ -26,19 +27,31 @@ if __name__ == "__main__":
 	#Purturb
 	horizonalSamples = [pt[0] for pt in framePos]
 	horizontalRange = max(horizonalSamples) - min(horizonalSamples)
-	offsetExample = -0.2
+	offsetExample = -0.15
 	
 	changedVals = np.copy(vals)
 	perturb = np.zeros(changedVals.shape)	
 	perturb[0] = offsetExample * horizontalRange
 	changedVals = changedVals + perturb
 
-	print changedVals[0], vals[0]
+	print perturb[0]
 
 	#Reconstruct synthetic image
 	synthApp, synthShape = combinedModel.EigenVecToNormFaceAndShape(changedVals)
 
 	#Get norm face from source, based on perturbed shape
-	perturbSource = combinedModel.ImageToNormaliseFace(im, synthShape)
+	perturbSourceFace = combinedModel.ImageToNormaliseFace(im, synthShape)
 
-	
+	synthAppArr = np.asarray(synthApp, dtype=np.float)
+	diff = synthAppArr - perturbSourceFace
+
+	#Extract pixels from diff
+	diffVals = []
+	for px in pixelSubset:
+		#print px, diff[px[0],px[1],:]
+		diffVals.extend(diff[px[0],px[1],:])
+
+	pred = predictors[0]
+	print pred.predict(diffVals)
+
+
